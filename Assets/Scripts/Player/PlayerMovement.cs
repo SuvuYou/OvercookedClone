@@ -1,9 +1,11 @@
 using UnityEngine;
+using Unity.Netcode;
 
-[RequireComponent(typeof(PlayerInput))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
     [SerializeField] private PlayerStateSO _playerState;
+    // TODO: Temp; handle this
+    [SerializeField] private PlayerController _playerController;
 
     private float _playerHeight = 2f;
     private float _playerRadius = 0.7f;
@@ -11,6 +13,16 @@ public class PlayerMovement : MonoBehaviour
     private float _rotationSpeed = 17f;
 
     private float _movementInputThreshold = 0.15f;
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner)
+        {
+            enabled = false;
+            // TODO: Got damn this it horrible
+            _playerController.enabled = false;
+        }
+    }
 
     private void Update()
     {

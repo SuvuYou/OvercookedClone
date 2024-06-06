@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerInput))]
 public class PlayerController : KitchenItemParent
 {
     [SerializeField] private PlayerStateSO _playerState;

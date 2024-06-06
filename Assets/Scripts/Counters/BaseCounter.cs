@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class BaseCounter : KitchenItemParent
 {
-    [SerializeField] private SelectedCounterSO _selectedCounter; 
+    [SerializeField] private SelectedCounterSO _selectedCounter;
     [SerializeField] private GameObject _selectedVisualIndicator;
 
     private void Start()
@@ -15,9 +15,9 @@ public class BaseCounter : KitchenItemParent
         _selectedCounter.OnSelectCounter -= _checkIsCounterSelected;
     }
 
-    public virtual void Interact(KitchenItemParent player) {}
+    public virtual void Interact(KitchenItemParent player) { }
 
-    public virtual void InteractAlternative(KitchenItemParent player) {}
+    public virtual void InteractAlternative(KitchenItemParent player) { }
 
     private void _checkIsCounterSelected(BaseCounter newSelectedCounter)
     {

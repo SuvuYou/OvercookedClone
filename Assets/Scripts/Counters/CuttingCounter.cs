@@ -14,14 +14,13 @@ public class CuttingCounter : BaseCounter
             _cuttingProgress.TriggerProgressUpdate(0);
         }
 
-        if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsSliceable()) 
+        if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsSliceable())
         {
             _cuttingProgress.TriggerProgressUpdate(0);
             _cuttingProgress.SetMaxProgress(player.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount);
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
-            
         }
-        else if (!player.IsHoldingItem()) 
+        else if (!player.IsHoldingItem())
         {
             _cuttingProgress.TriggerProgressUpdate(0);
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);

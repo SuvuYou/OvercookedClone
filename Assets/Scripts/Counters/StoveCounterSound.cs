@@ -9,7 +9,7 @@ public class StoveCounterSound : MonoBehaviour
     private void Start()
     {
         _stove.OnStoveOn += () => _turnStoveSizzleOn();
-        _stove.OnStoveOff +=() =>  _turnStoveSizzleOff();
+        _stove.OnStoveOff += () => _turnStoveSizzleOff();
         GameManager.Instance.OnPause += _updateSoundOnPause;
     }
 
@@ -20,7 +20,7 @@ public class StoveCounterSound : MonoBehaviour
         GameManager.Instance.OnPause -= _updateSoundOnPause;
     }
 
-    private void _updateSoundOnPause (bool isPaused)
+    private void _updateSoundOnPause(bool isPaused)
     {
         if (isPaused) _turnStoveSizzleOff(shouldUpdateCache: false);
         else if (_isSoundBeingPlayedCached) _turnStoveSizzleOn();

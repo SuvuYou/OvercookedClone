@@ -6,9 +6,9 @@ public class PlayerInput : MonoBehaviour
 {
     public static PlayerInput Instance;
 
-    private const string ACTION_BINDINGS_PLAYER_PREF = "ActionBindings"; 
+    private const string ACTION_BINDINGS_PLAYER_PREF = "ActionBindings";
 
-    public enum ActionBinding 
+    public enum ActionBinding
     {
         MoveUp,
         MoveRight,
@@ -39,7 +39,7 @@ public class PlayerInput : MonoBehaviour
         if (Instance != null)
         {
             Destroy(this);
-            
+
             return;
         }
 
@@ -68,7 +68,7 @@ public class PlayerInput : MonoBehaviour
     {
         Vector2 inputVector = _inputSystem.Standard.Move.ReadValue<Vector2>();
 
-        Vector3 movementDirection = new (inputVector.x, 0f, inputVector.y);
+        Vector3 movementDirection = new(inputVector.x, 0f, inputVector.y);
 
         return movementDirection.normalized;
     }
@@ -82,7 +82,7 @@ public class PlayerInput : MonoBehaviour
     {
         if (GameManager.Instance.IsPaused) return;
 
-        switch(GameManager.Instance.State)
+        switch (GameManager.Instance.State)
         {
             case GameState.Waiting:
                 OnInteractWaitingMode?.Invoke();
@@ -161,20 +161,20 @@ public class PlayerInput : MonoBehaviour
                 _performRebind(_inputSystem.Standard.InteractAlternative, actionIndex: 0);
                 break;
             default:
-                OnRebindKeyComplete?.Invoke();  
+                OnRebindKeyComplete?.Invoke();
                 break;
         }
     }
 
-    private void _performRebind (InputAction action, int actionIndex)
+    private void _performRebind(InputAction action, int actionIndex)
     {
         _inputSystem.Standard.Disable();
 
         action
         .PerformInteractiveRebinding(actionIndex)
-        .OnComplete(cb => 
+        .OnComplete(cb =>
         {
-            OnRebindKeyComplete?.Invoke();  
+            OnRebindKeyComplete?.Invoke();
             _inputSystem.Standard.Enable();
             PlayerPrefs.SetString(ACTION_BINDINGS_PLAYER_PREF, _inputSystem.SaveBindingOverridesAsJson());
             PlayerPrefs.Save();
