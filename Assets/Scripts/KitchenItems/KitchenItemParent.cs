@@ -1,7 +1,8 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
-public class KitchenItemParent : MonoBehaviour
+public class KitchenItemParent : NetworkBehaviour
 {
     [SerializeField] private Transform _itemSpawnPlaceholder;
 
@@ -16,22 +17,48 @@ public class KitchenItemParent : MonoBehaviour
     public KitchenItem GetCurrentItemHeld() => _currentItemHeld;
     public bool IsHoldingItem() => _currentItemHeld != null;
 
+    // TODO: Fix delay issues;
     public void SetCurrentItemHeld(KitchenItem newItem) 
     {
-        _currentItemHeld = newItem;
-        
         if (newItem != null)
         {
-            _currentItemHeld.transform.parent = _itemSpawnPlaceholder;
-            _currentItemHeld.transform.position = _itemSpawnPlaceholder.position;
-
-            TriggerOnItemPickup();
+            SetCurrentItemHeldServerRpc(newItem.GetNetworkObjectReference());
         }
         else
         {
-            TriggerOnItemDrop();
+            ResetCurrentItemHeldServerRpc();
         }
     } 
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetCurrentItemHeldServerRpc(NetworkObjectReference kitchenItem) 
+    {
+        SetCurrentItemHeldClientRpc(kitchenItem);
+    } 
+    
+    [ClientRpc]
+    public void SetCurrentItemHeldClientRpc(NetworkObjectReference kitchenItem) 
+    {
+        if (kitchenItem.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out KitchenItem item))
+        {
+            _currentItemHeld = item;
+            item.SetTargetToFollow(_itemSpawnPlaceholder);
+            TriggerOnItemPickup();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetCurrentItemHeldServerRpc() 
+    {
+        ResetCurrentItemHeldClientRpc();
+    } 
+    
+    [ClientRpc]
+    public void ResetCurrentItemHeldClientRpc() 
+    {
+        _currentItemHeld = null;
+        TriggerOnItemDrop();
+    }
 
     public void DestroyCurrentItemHeld()
     {
@@ -39,6 +66,28 @@ public class KitchenItemParent : MonoBehaviour
 
         Destroy(_currentItemHeld.gameObject);
         SetCurrentItemHeld(null);
+    }
+
+    public NetworkObject GetNetworkObjectReference()
+    {
+        return NetworkObject;
+    }
+
+    public void SpawnKitchenItem(int kithcenItemIndex)
+    {
+        SpawnKitchenItemOnKitchenItemParentServerRpc(kithcenItemIndex, kitchenItemParentRef: NetworkObject);
+    }
+
+    // TODO: maybe make static 
+    [ServerRpc(RequireOwnership = false)]
+    private void SpawnKitchenItemOnKitchenItemParentServerRpc(int kitchenItemIndex, NetworkObjectReference kitchenItemParentRef)
+    {
+        if (kitchenItemParentRef.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out KitchenItemParent parent))
+        {
+            KitchenItem item = Instantiate(KitchenItemsList.Instance.Items[kitchenItemIndex].Prefab, Vector3.zero, Quaternion.identity);
+            item.GetComponent<NetworkObject>().Spawn();
+            parent.SetCurrentItemHeld(item);
+        }
     }
 
     public static void SwapItemsOfTwoOwners(KitchenItemParent parent1, KitchenItemParent parent2)

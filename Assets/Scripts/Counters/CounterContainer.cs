@@ -8,24 +8,18 @@ public class CounterContainer : BaseCounter
 
     public override void Interact(KitchenItemParent player)
     {
-        SetCurrentItemHeld(Instantiate(_kitchenItemToSpawn.Prefab, Vector3.zero, Quaternion.identity));
+        if (!player.IsHoldingItem())
+        {
+            player.SpawnKitchenItem(KitchenItemsList.Instance.GetIndexOfItem(_kitchenItemToSpawn));
+            OnContainerOpen?.Invoke();
+        }
 
         if (player.IsHoldingItem()) 
         {
-            if (!KitchenItemParent.TryAddIngredientToPlate(player, this))
-            {
-                DestroyCurrentItemHeld();
-            }
-            else
+            if (KitchenItemParent.TryAddIngredientToPlate(player, this))
             {
                 OnContainerOpen?.Invoke();
             }
-
-            return;
         };
-        
-        KitchenItemParent.SwapItemsOfTwoOwners(player, this);
-
-        OnContainerOpen?.Invoke();
     }
 }
