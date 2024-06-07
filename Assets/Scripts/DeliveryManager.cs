@@ -1,10 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Netcode;
 using UnityEngine;
 
-public class DeliveryManager : MonoBehaviour
+public class DeliveryManager : NetworkBehaviour
 {
     public static DeliveryManager Instance;
 
@@ -15,10 +15,12 @@ public class DeliveryManager : MonoBehaviour
 
     [SerializeField] private AvailableRecipesListSO _availableRecipesList;
     private List<RecipeSO> _currentWaitingRecipeList = new();
+    private NetworkList<int> _currentWaitingRecipeIndeciesList;
 
-    private bool _isAddingNewRecipe = false;
-
-    private const int _maxRecipeWaitingCount = 4; 
+    private const int MAX_RECIPE_WAITING_COUNT = 4; 
+    // TODO: possible make random
+    private const float TIMEOUT_BETWEEN_RECIPE_ADDED = 4f; 
+    private TimingTimer _addingRecipeTimer = new(defaultTimerValue: TIMEOUT_BETWEEN_RECIPE_ADDED);
 
     private void Awake()
     {
@@ -28,6 +30,7 @@ public class DeliveryManager : MonoBehaviour
         }
         else
         {
+            _currentWaitingRecipeIndeciesList = new NetworkList<int>();
             Instance = this;
         }
     }
@@ -39,31 +42,70 @@ public class DeliveryManager : MonoBehaviour
             return;
         }
 
-        _addRecipeToWaitingList();
+        if (IsClient)
+        {
+            if (_currentWaitingRecipeList.Count != _currentWaitingRecipeIndeciesList.Count)
+            {
+                _syncRecipeListWithNetworkList();
+            }
+        }
+
+        if (IsServer)
+        {
+            _addingRecipeTimer.SubtractTime(Time.deltaTime);
+
+            if (_addingRecipeTimer.Timer <= 0 && _currentWaitingRecipeList.Count < MAX_RECIPE_WAITING_COUNT)
+            {
+                _addingRecipeTimer.ResetTimer();
+
+                int randRecipeIndex = UnityEngine.Random.Range(0, _availableRecipesList.AvailableRecipes.Count);
+                _currentWaitingRecipeIndeciesList.Add(randRecipeIndex);
+            }
+        }
     }
 
-    private void _addRecipeToWaitingList()
+    private void _syncRecipeListWithNetworkList()
     {
-        if (!_isAddingNewRecipe)
+        _currentWaitingRecipeList.Clear();
+
+        foreach (int recipeIndex in _currentWaitingRecipeIndeciesList)
         {
-            StartCoroutine(_addRecipeToWaitingListCoroutine());
-        }
-    } 
-
-    private IEnumerator _addRecipeToWaitingListCoroutine()
-    {
-        _isAddingNewRecipe = true;
-
-        if (_currentWaitingRecipeList.Count < _maxRecipeWaitingCount)
-        {
-            RecipeSO newRecipe = _availableRecipesList.AvailableRecipes[UnityEngine.Random.Range(0, _availableRecipesList.AvailableRecipes.Count)];
-            _currentWaitingRecipeList.Add(newRecipe);
-            OnAddRecipe?.Invoke();
-
-            yield return new WaitForSeconds(UnityEngine.Random.Range(4f, 8f));
+            _addRecipeToWaitingListByIndex(recipeIndex);   
         }
 
-        _isAddingNewRecipe = false;
+        OnAddRecipe?.Invoke();
+    }
+
+    private void _addRecipeToWaitingListByIndex(int recipeIndex)
+    {
+        RecipeSO newRecipe = _availableRecipesList.AvailableRecipes[recipeIndex];
+        _currentWaitingRecipeList.Add(newRecipe);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _deliverSuccessfulRecipeServerRpc(int recipeIndexAtNetworkList)
+    {
+        _currentWaitingRecipeIndeciesList.RemoveAt(recipeIndexAtNetworkList);
+        _deliverSuccessfulRecipeClientRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _deliverFailedRecipeServerRpc()
+    {
+        _deliverFailedRecipeClientRpc();
+    }
+
+    [ClientRpc]
+    private void _deliverSuccessfulRecipeClientRpc()
+    {
+        OnRemoveRecipe?.Invoke();
+        OnDeliverySuccess?.Invoke();
+    }
+
+    [ClientRpc]
+    private void _deliverFailedRecipeClientRpc()
+    {
+        OnDeliveryFailed?.Invoke(); 
     }
 
     public bool TryDeliverRecipePlate(Plate plate)
@@ -77,15 +119,12 @@ public class DeliveryManager : MonoBehaviour
 
             if (plate.Ingredients.OrderBy(ing => ing.ItemName).SequenceEqual(recipe.Ingredients.OrderBy(ing => ing.ItemName)))
             {
-                _currentWaitingRecipeList.Remove(recipe);
-                OnRemoveRecipe?.Invoke();
-                OnDeliverySuccess?.Invoke();
-
+                _deliverSuccessfulRecipeServerRpc(_currentWaitingRecipeList.FindIndex((RecipeSO match) => match == recipe));
                 return true;
             }
         }
 
-        OnDeliveryFailed?.Invoke();
+        _deliverFailedRecipeServerRpc();
         return false;
     }
 
