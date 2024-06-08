@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class Plate : KitchenItem
@@ -17,8 +18,8 @@ public class Plate : KitchenItem
             ProhibitedIngredients = _prohibitedIngredients;
         }
     }
-
-    public bool TryAddIngredient(KitchenItemSO ingredient)
+    
+    public bool TryAddIngredientOnNetwork(KitchenItemSO ingredient)
     {
         if (_prohibitedIngredients.Contains(ingredient) || Ingredients.Contains(ingredient))
         {
@@ -26,12 +27,30 @@ public class Plate : KitchenItem
         }
         else
         {
-            SoundManager.SoundEvents.TriggerOnObjectPickupSound(transform.position);
-            Ingredients.Add(ingredient);
-            OnAddIngredient?.Invoke(ingredient);
+            _addIngredientServerRpc(KitchenItemsList.Instance.GetIndexOfItem(ingredient));
 
             return true;
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _addIngredientServerRpc(int kitchenItemIndex)
+    {
+        _addIngredientClientRpc(kitchenItemIndex);
+    }
+
+    [ClientRpc]
+    private void _addIngredientClientRpc(int kitchenItemIndex)
+    {
+        _addIngredientByKitchenItemIndex(kitchenItemIndex);
+    }
+
+    private void _addIngredientByKitchenItemIndex(int kitchenItemIndex)
+    {
+        KitchenItemSO ingredient = KitchenItemsList.Instance.Items[kitchenItemIndex];
+        SoundManager.SoundEvents.TriggerOnObjectPickupSound(transform.position);
+        Ingredients.Add(ingredient);
+        OnAddIngredient?.Invoke(ingredient);
     }
 
     public static bool IsIngridientAllowedOnPlate(KitchenItemSO ingredient)

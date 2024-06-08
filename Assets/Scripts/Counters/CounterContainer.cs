@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class CounterContainer : BaseCounter
@@ -10,16 +11,28 @@ public class CounterContainer : BaseCounter
     {
         if (!player.IsHoldingItem())
         {
-            player.SpawnKitchenItem(KitchenItemsList.Instance.GetIndexOfItem(_kitchenItemToSpawn));
-            OnContainerOpen?.Invoke();
+            player.SpawnKitchenItem(_kitchenItemToSpawn);
+            _triggerEventOnNetworkServerRpc();
         }
 
         if (player.IsHoldingItem()) 
         {
-            if (KitchenItemParent.TryAddIngredientToPlate(player, this))
+            if (KitchenItemParent.TryAddIngredientToPlate(player, _kitchenItemToSpawn))
             {
-                OnContainerOpen?.Invoke();
+                _triggerEventOnNetworkServerRpc();
             }
         };
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerEventOnNetworkServerRpc()
+    {
+        _triggerEventOnNetworkClientRpc();
+    }
+
+    [ClientRpc]
+    private void _triggerEventOnNetworkClientRpc()
+    {
+        OnContainerOpen?.Invoke();
     }
 }

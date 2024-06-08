@@ -22,22 +22,22 @@ public class KitchenItemParent : NetworkBehaviour
     {
         if (newItem != null)
         {
-            SetCurrentItemHeldServerRpc(newItem.GetNetworkObjectReference());
+            _setCurrentItemHeldServerRpc(newItem.GetNetworkObjectReference());
         }
         else
         {
-            ResetCurrentItemHeldServerRpc();
+            _resetCurrentItemHeldServerRpc();
         }
     } 
 
     [ServerRpc(RequireOwnership = false)]
-    public void SetCurrentItemHeldServerRpc(NetworkObjectReference kitchenItem) 
+    private void _setCurrentItemHeldServerRpc(NetworkObjectReference kitchenItem) 
     {
-        SetCurrentItemHeldClientRpc(kitchenItem);
+        _setCurrentItemHeldClientRpc(kitchenItem);
     } 
     
     [ClientRpc]
-    public void SetCurrentItemHeldClientRpc(NetworkObjectReference kitchenItem) 
+    private void _setCurrentItemHeldClientRpc(NetworkObjectReference kitchenItem) 
     {
         if (kitchenItem.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out KitchenItem item))
         {
@@ -48,13 +48,13 @@ public class KitchenItemParent : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void ResetCurrentItemHeldServerRpc() 
+    private void _resetCurrentItemHeldServerRpc() 
     {
-        ResetCurrentItemHeldClientRpc();
+        _resetCurrentItemHeldClientRpc();
     } 
     
     [ClientRpc]
-    public void ResetCurrentItemHeldClientRpc() 
+    private void _resetCurrentItemHeldClientRpc() 
     {
         _currentItemHeld = null;
         TriggerOnItemDrop();
@@ -64,18 +64,27 @@ public class KitchenItemParent : NetworkBehaviour
     {
         if (_currentItemHeld == null) return;
 
-        Destroy(_currentItemHeld.gameObject);
-        SetCurrentItemHeld(null);
+        _destroyCurrentItemHeldServerRpc();
+        _resetCurrentItemHeldServerRpc();
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void _destroyCurrentItemHeldServerRpc() 
+    {
+        if (_currentItemHeld.TryGetComponent(out NetworkObject netObj))
+        {
+            netObj.Despawn(destroy: true);
+        }
+    } 
+    
     public NetworkObject GetNetworkObjectReference()
     {
         return NetworkObject;
     }
 
-    public void SpawnKitchenItem(int kithcenItemIndex)
+    public void SpawnKitchenItem(KitchenItemSO kithcenItem)
     {
-        SpawnKitchenItemOnKitchenItemParentServerRpc(kithcenItemIndex, kitchenItemParentRef: NetworkObject);
+        SpawnKitchenItemOnKitchenItemParentServerRpc(KitchenItemsList.Instance.GetIndexOfItem(kithcenItem), kitchenItemParentRef: NetworkObject);
     }
 
     // TODO: maybe make static 
@@ -102,24 +111,32 @@ public class KitchenItemParent : NetworkBehaviour
         if (!parent1.IsHoldingItem() || !parent2.IsHoldingItem()) return false;
 
         return (
-            _tryAddIngredientToPlateOwner(plateOwner: parent1, ingredientOwner: parent2) || 
-            _tryAddIngredientToPlateOwner(plateOwner: parent2, ingredientOwner: parent1)
+            _tryAddIngredientToPlateOwner(plateOwner: parent1, ingredient: parent2.GetCurrentItemHeld().GetItemReference()) || 
+            _tryAddIngredientToPlateOwner(plateOwner: parent2, ingredient: parent1.GetCurrentItemHeld().GetItemReference())
         );
     }   
-    
-    private static bool _tryAddIngredientToPlateOwner(KitchenItemParent plateOwner, KitchenItemParent ingredientOwner)
+
+    public static bool TryAddIngredientToPlate(KitchenItemParent parent, KitchenItemSO kitchenItem)
+    {
+        if (!parent.IsHoldingItem()) return false;
+
+        return (
+            _tryAddIngredientToPlateOwner(plateOwner: parent, ingredient: kitchenItem)
+        );
+    }   
+
+    private static bool _tryAddIngredientToPlateOwner(KitchenItemParent plateOwner, KitchenItemSO ingredient)
     {
         if (plateOwner.GetCurrentItemHeld().TryGetPlateComponent(out Plate plate)) 
         {
-            if (plate.TryAddIngredient(ingredientOwner.GetCurrentItemHeld().GetItemReference()))
+            if (plate.TryAddIngredientOnNetwork(ingredient))
             {
-                ingredientOwner.DestroyCurrentItemHeld();
                 plateOwner.TriggerOnItemPickup();
 
                 return true;
             }
         }
-        
+
         return false;
     }
 }

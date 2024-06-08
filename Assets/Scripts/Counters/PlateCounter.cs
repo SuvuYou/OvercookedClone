@@ -36,20 +36,14 @@ public class PlateCounter : BaseCounter
         {
             if (!player.IsHoldingItem())
             {
-                player.SetCurrentItemHeld(Instantiate(_platePrefab, Vector3.zero, Quaternion.identity));
+                player.SpawnKitchenItem(_platePrefab.GetItemReference());
 
                 _updatePlatesCount(newPlatesCount: _platesCount - 1);
             }
-            else if (Plate.IsIngridientAllowedOnPlate(player.GetCurrentItemHeld().GetItemReference()))
-            {
-                KitchenItemSO ingredient = player.GetCurrentItemHeld().GetItemReference();
-                Plate plate = Instantiate(_platePrefab, Vector3.zero, Quaternion.identity);
-                plate.TryAddIngredient(ingredient);
-                player.DestroyCurrentItemHeld();
-                player.SetCurrentItemHeld(plate);
-
-                _updatePlatesCount(newPlatesCount: _platesCount - 1);
-            }
+            // else if (Plate.IsIngridientAllowedOnPlate(player.GetCurrentItemHeld().GetItemReference()))
+            // {
+                // TODO: Potentialy allow player to pick up plate with ingredient in hand
+            // }
         }
     }
 

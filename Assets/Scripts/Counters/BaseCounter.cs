@@ -10,8 +10,10 @@ public class BaseCounter : KitchenItemParent
         _selectedCounter.OnSelectCounter += _checkIsCounterSelected;
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
+        base.OnDestroy();
+    
         _selectedCounter.OnSelectCounter -= _checkIsCounterSelected;
     }
 
