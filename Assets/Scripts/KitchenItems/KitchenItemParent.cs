@@ -59,6 +59,8 @@ public class KitchenItemParent : NetworkBehaviour
     }
 
     // TODO: Fix delay issues;
+    // TODO: Fix Grogress bar AABA;
+    // TODO: Fix Sound;
     public void SetCurrentItemHeld(KitchenItem newItem) 
     {
         if (newItem != null)
@@ -119,13 +121,12 @@ public class KitchenItemParent : NetworkBehaviour
         SpawnKitchenItemOnKitchenItemParentServerRpc(KitchenItemsList.Instance.GetIndexOfItem(kithcenItem), kitchenItemParentRef: NetworkObject);
     }
 
-    // TODO: maybe make static 
     [ServerRpc(RequireOwnership = false)]
     private void SpawnKitchenItemOnKitchenItemParentServerRpc(int kitchenItemIndex, NetworkObjectReference kitchenItemParentRef)
     {
         if (kitchenItemParentRef.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out KitchenItemParent parent))
         {
-            KitchenItem item = Instantiate(KitchenItemsList.Instance.Items[kitchenItemIndex].Prefab, Vector3.zero, Quaternion.identity);
+            KitchenItem item = Instantiate(KitchenItemsList.Instance.Items[kitchenItemIndex].Prefab, parent.transform.position, Quaternion.identity);
             item.GetComponent<NetworkObject>().Spawn();
             parent.SetCurrentItemHeld(item);
         }

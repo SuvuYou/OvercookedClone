@@ -1,13 +1,13 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections.Generic;
 
 public class PlayerMovement : NetworkBehaviour
 {
     [SerializeField] private PlayerStateSO _playerState;
-    // TODO: Temp; handle this
-    [SerializeField] private PlayerController _playerController;
-
-    private float _playerHeight = 2f;
+    [SerializeField] private LayerMask _collisionsMask;
+    [SerializeField] private List<Vector3> _spawnPositions;
+ 
     private float _playerRadius = 0.7f;
     private float _movementSpeed = 10f;
     private float _rotationSpeed = 17f;
@@ -19,9 +19,9 @@ public class PlayerMovement : NetworkBehaviour
         if (!IsOwner)
         {
             enabled = false;
-            // TODO: Got damn this it horrible
-            _playerController.enabled = false;
         }
+
+        transform.position = _spawnPositions[(int)OwnerClientId];
     }
 
     private void Update()
@@ -48,8 +48,8 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 xVec = new (_registerMovementWithinThreshold(movementDirection.x), 0f, 0f);
         Vector3 zVec = new (0f, 0f, _registerMovementWithinThreshold(movementDirection.z));
 
-        bool canWalkOnXAxis = !Physics.CapsuleCast(transform.position, transform.position + (Vector3.up * _playerHeight), _playerRadius, xVec, distance);
-        bool canWalkOnZAxis = !Physics.CapsuleCast(transform.position, transform.position + (Vector3.up * _playerHeight), _playerRadius, zVec, distance);
+        bool canWalkOnXAxis = !Physics.BoxCast(transform.position, Vector3.one * _playerRadius, xVec, Quaternion.identity, distance, layerMask: _collisionsMask);
+        bool canWalkOnZAxis = !Physics.BoxCast(transform.position, Vector3.one * _playerRadius, zVec, Quaternion.identity, distance, layerMask: _collisionsMask);
 
         Vector3 allowedMovementDirection = Vector3.zero;
 

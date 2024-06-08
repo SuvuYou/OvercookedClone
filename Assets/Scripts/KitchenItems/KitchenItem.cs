@@ -17,15 +17,9 @@ public class KitchenItem : NetworkBehaviour
         _followTransform.SetTargetTransform(target);
     }
 
-    public KitchenItemSO GetItemReference()
-    {
-        return _itemReference;
-    }
+    public KitchenItemSO GetItemReference() => _itemReference;
 
-    public NetworkObject GetNetworkObjectReference()
-    {
-        return NetworkObject;
-    }
+    public NetworkObject GetNetworkObjectReference() => NetworkObject;
 
     public bool TryGetPlateComponent(out Plate plate)
     {

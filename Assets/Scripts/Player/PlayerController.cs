@@ -7,6 +7,16 @@ public class PlayerController : KitchenItemParent
 
     private float _raycastDistance = 1.2f;
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (!IsOwner)
+        {
+            enabled = false;
+        }
+    }
+
     private void Start()
     {
         PlayerInput.Instance.OnInteract += () => _selectedCounter.SelectedCounter?.Interact(this);

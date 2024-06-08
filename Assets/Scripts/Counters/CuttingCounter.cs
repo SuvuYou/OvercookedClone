@@ -23,7 +23,7 @@ public class CuttingCounter : BaseCounter
         }
         else if (!player.IsHoldingItem())
         {
-             _cuttingProgress.SetProgressServerRpc(0);
+            _cuttingProgress.SetProgressServerRpc(0);
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
         }
     }
