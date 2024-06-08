@@ -71,19 +71,6 @@ public class DeliveryManager : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void _deliverSuccessfulRecipeServerRpc(int recipeIndexAtNetworkList)
-    {
-        _currentWaitingRecipeList.RemoveAt(recipeIndexAtNetworkList);
-        _deliverSuccessfulRecipeClientRpc();
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void _deliverFailedRecipeServerRpc()
-    {
-        _deliverFailedRecipeClientRpc();
-    }
-
     [ClientRpc]
     private void _deliverSuccessfulRecipeClientRpc()
     {
@@ -116,6 +103,19 @@ public class DeliveryManager : NetworkBehaviour
 
         _deliverFailedRecipeServerRpc();
         return false;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _deliverSuccessfulRecipeServerRpc(int recipeIndexAtNetworkList)
+    {
+        _currentWaitingRecipeIndicesList.RemoveAt(recipeIndexAtNetworkList);
+        _deliverSuccessfulRecipeClientRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _deliverFailedRecipeServerRpc()
+    {
+        _deliverFailedRecipeClientRpc();
     }
 
     public List<RecipeSO> GetCurrentWaitingRecipeList() => _currentWaitingRecipeList;
