@@ -3084,7 +3084,7 @@ PrefabInstance:
     - target: {fileID: 4654163011420754133, guid: 32ce90df37760bb4a951e9a2c1d06a9c, type: 3}
       propertyPath: _cuttingProgress
       value: 
-      objectReference: {fileID: 11400000, guid: 795f0585a77ee3f459151faac58248ea, type: 2}
+      objectReference: {fileID: 1708102228}
     - target: {fileID: 5328369202300210729, guid: 32ce90df37760bb4a951e9a2c1d06a9c, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 468164725
@@ -10815,6 +10815,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1684803469}
   m_CullTransparentMesh: 1
+--- !u!114 &1708102228 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3928273095535201231, guid: 32ce90df37760bb4a951e9a2c1d06a9c, type: 3}
+  m_PrefabInstance: {fileID: 450458430}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e7b60c36d5c5d64ca8966daeb8d8d54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1740179753
 GameObject:
   m_ObjectHideFlags: 0

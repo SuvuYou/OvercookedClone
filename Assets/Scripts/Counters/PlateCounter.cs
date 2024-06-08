@@ -67,7 +67,6 @@ public class PlateCounter : BaseCounter
     [ClientRpc]
     private void _triggerOnPlateNumberChangeClientRpc(int newPlatesCount)
     {
-        Debug.Log(newPlatesCount);
         OnPlateNumberChange?.Invoke(newPlatesCount);
     }
 }

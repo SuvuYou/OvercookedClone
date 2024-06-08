@@ -14,12 +14,11 @@ public class StoveCounter : BaseCounter
     public event Action OnStoveOff;
 
     private State _state;
-    [SerializeField] private ProgressTrackerSO _fryingProgress;
+    [SerializeField] private ProgressTrackerOnNetwork _fryingProgress;
     
-
     private void Awake ()
     {
-        _fryingProgress.SetMaxProgress(float.MaxValue);
+        _fryingProgress.SetMaxProgressServerRpc(float.MaxValue);
     }
 
     private void Update ()
@@ -40,21 +39,21 @@ public class StoveCounter : BaseCounter
     {
         if (KitchenItemParent.TryAddIngredientToPlate(player, this))
         {
-            _fryingProgress.TriggerProgressUpdate(0);
+            _fryingProgress.SetProgressServerRpc(0);
             _switchState(State.Idle); 
         }
 
         if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsFryable()) 
         {
-            _fryingProgress.TriggerProgressUpdate(0);
-            _fryingProgress.SetMaxProgress(player.GetCurrentItemHeld().GetItemReference().FryableSO.FryingTimer);   
+            _fryingProgress.SetProgressServerRpc(0);
+            _fryingProgress.SetMaxProgressServerRpc(player.GetCurrentItemHeld().GetItemReference().FryableSO.FryingTimer);   
             _switchState(State.Frying);
 
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
         }
         else if (!player.IsHoldingItem()) 
         {
-            _fryingProgress.TriggerProgressUpdate(0);
+            _fryingProgress.SetProgressServerRpc(0);
             _switchState(State.Idle); 
 
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
@@ -71,24 +70,24 @@ public class StoveCounter : BaseCounter
 
     private void _processFrying()
     {
-        _fryingProgress.TriggerProgressUpdate(_fryingProgress.Progress + Time.deltaTime);
+        _fryingProgress.SetProgressServerRpc(_fryingProgress.Progress + Time.deltaTime);
 
         if (_fryingProgress.Progress >= _fryingProgress.MaxProgress)
         {
-            KitchenItem friedItem = GetCurrentItemHeld().GetItemReference().FryableSO.FriedPrefab;
+            KitchenItemSO friedItem = this.GetCurrentItemHeld().GetItemReference().FryableSO.FriedPrefab.GetItemReference();
             
-            DestroyCurrentItemHeld();
-            SetCurrentItemHeld(Instantiate(friedItem, Vector3.zero, Quaternion.identity));
+            this.DestroyCurrentItemHeld();
+            this.SpawnKitchenItem(friedItem);
 
-            if (friedItem.GetItemReference().IsFryable())
+            if (friedItem.IsFryable())
             {
-                _fryingProgress.SetMaxProgress(friedItem.GetItemReference().FryableSO.FryingTimer); 
-                _fryingProgress.TriggerProgressUpdate(0);
+                _fryingProgress.SetMaxProgressServerRpc(friedItem.FryableSO.FryingTimer); 
+                _fryingProgress.SetProgressServerRpc(0);
                 _switchState(State.Fried);
             }
             else
             {
-                _fryingProgress.TriggerProgressUpdate(0);
+                _fryingProgress.SetProgressServerRpc(0);
                 _switchState(State.Burned);
             }
         }

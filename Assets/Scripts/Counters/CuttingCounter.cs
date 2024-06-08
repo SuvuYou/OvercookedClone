@@ -1,9 +1,10 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class CuttingCounter : BaseCounter
 {
-    [SerializeField] private ProgressTrackerSO _cuttingProgress;
+    [SerializeField] private ProgressTrackerOnNetwork _cuttingProgress;
 
     public event Action OnCut;
 
@@ -11,37 +12,50 @@ public class CuttingCounter : BaseCounter
     {
         if (KitchenItemParent.TryAddIngredientToPlate(player, this))
         {
-            _cuttingProgress.TriggerProgressUpdate(0);
+            _cuttingProgress.SetProgressServerRpc(0);
         }
 
         if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsSliceable())
         {
-            _cuttingProgress.TriggerProgressUpdate(0);
-            _cuttingProgress.SetMaxProgress(player.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount);
+            _cuttingProgress.SetProgressServerRpc(0);
+            _cuttingProgress.SetMaxProgressServerRpc(player.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount);
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
         }
         else if (!player.IsHoldingItem())
         {
-            _cuttingProgress.TriggerProgressUpdate(0);
+             _cuttingProgress.SetProgressServerRpc(0);
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
         }
     }
 
     public override void InteractAlternative(KitchenItemParent player)
     {
-        if (IsHoldingItem() && GetCurrentItemHeld().GetItemReference().IsSliceable())
+        if (this.IsHoldingItem() && this.GetCurrentItemHeld().GetItemReference().IsSliceable())
         {
-            _cuttingProgress.TriggerProgressUpdate(_cuttingProgress.Progress + 1);
-            OnCut?.Invoke();
-            SoundManager.SoundEvents.TriggerOnCutSound(transform.position);
+            float newCuttingProgress = _cuttingProgress.Progress + 1;
+            _cuttingProgress.SetProgressServerRpc(newCuttingProgress);
+            _triggerOnCutEventsServerRpc();
 
-            if (GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount == _cuttingProgress.Progress)
+            if (this.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount == newCuttingProgress)
             {
-                KitchenItem slicedItem = GetCurrentItemHeld().GetItemReference().SliceableSO.SlicedPrefab;
+                KitchenItemSO slicedItem = this.GetCurrentItemHeld().GetItemReference().SliceableSO.SlicedPrefab.GetItemReference();
                 DestroyCurrentItemHeld();
 
-                SetCurrentItemHeld(Instantiate(slicedItem, Vector3.zero, Quaternion.identity));
+                this.SpawnKitchenItem(slicedItem);
             }
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerOnCutEventsServerRpc()
+    {
+        _triggerOnCutEventsClientRpc();
+    }
+
+    [ClientRpc]
+    private void _triggerOnCutEventsClientRpc()
+    {
+        OnCut?.Invoke();
+        SoundManager.SoundEvents.TriggerOnCutSound(transform.position);
     }
 }
