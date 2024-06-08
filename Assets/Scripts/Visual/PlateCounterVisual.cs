@@ -9,7 +9,7 @@ public class PlateCounterVisual : MonoBehaviour
 
     private const float _singlePlateYOffset = 0.1f;
 
-    private Stack<GameObject> _plates = new();
+    private Stack<GameObject> _platesStack = new();
 
     private void Start()
     {
@@ -23,17 +23,33 @@ public class PlateCounterVisual : MonoBehaviour
 
     private void _updatePlatesCount (int newPlatesCount)
     {
-        if (newPlatesCount < _plates.Count) 
+        if (newPlatesCount < _platesStack.Count) 
         {
-            Destroy(_plates.Pop().gameObject);
+            _removePlatesFromStack(numberOfPlates: _platesStack.Count - newPlatesCount);
         }
-        else if (newPlatesCount > _plates.Count)
+        else if (newPlatesCount > _platesStack.Count)
         {
-            Vector3 offset = new (0f, _plates.Count * _singlePlateYOffset, 0f);
+            _addPlatesToStack(numberOfPlates: newPlatesCount - _platesStack.Count);
+        } 
+    }
+
+    private void _removePlatesFromStack(int numberOfPlates)
+    {
+        for (int i = 0; i < numberOfPlates; i++)
+        {
+            Destroy(_platesStack.Pop().gameObject);
+        }
+    }
+
+    private void _addPlatesToStack(int numberOfPlates)
+    {
+        for (int i = 0; i < numberOfPlates; i++)
+        {
+            Vector3 offset = new (0f, _platesStack.Count * _singlePlateYOffset, 0f);
             GameObject plate = Instantiate(_plateVisualPrefab, _plateSpawnPlaceholder.position + offset, _plateVisualPrefab.transform.rotation);
             plate.transform.parent = _plateSpawnPlaceholder;
-            _plates.Push(plate); 
-        } 
+            _platesStack.Push(plate); 
+        }
     }
 
 }

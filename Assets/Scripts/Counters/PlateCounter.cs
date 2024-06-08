@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class PlateCounter : BaseCounter
@@ -6,10 +7,14 @@ public class PlateCounter : BaseCounter
     [SerializeField] private Plate _platePrefab;
     public event Action<int> OnPlateNumberChange;
 
-    private int _platesCount = 0;
+    private NetworkVariable<int> _platesCount = new (value: 0);
     private const int _platesCountLimit = 4;
-    private float _plateSpawnTimer;
-    private const float _plateSpawnTime = 2f;
+    private TimingTimer _plateSpawnTimer = new (defaultTimerValue: 2f);
+
+    public override void OnNetworkSpawn()
+    {
+        OnPlateNumberChange?.Invoke(_platesCount.Value);
+    }
 
     private void Update()
     {
@@ -18,27 +23,32 @@ public class PlateCounter : BaseCounter
             return;
         }
 
-        if (_platesCount < _platesCountLimit)
+        if (!IsServer)
         {
-            _plateSpawnTimer += Time.deltaTime;
+            return;
+        }
 
-            if (_plateSpawnTimer >= _plateSpawnTime)
+        if (_platesCount.Value < _platesCountLimit)
+        {
+            _plateSpawnTimer.SubtractTime(Time.deltaTime);
+
+            if (_plateSpawnTimer.Timer <= 0)
             {
-                _updatePlatesCount(newPlatesCount: _platesCount + 1);
-                _plateSpawnTimer = 0f;
+                _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value + 1);
+                _plateSpawnTimer.ResetTimer();
             }
         }
     }
 
     public override void Interact(KitchenItemParent player)
     {
-        if (_platesCount > 0)
+        if (_platesCount.Value > 0)
         {
             if (!player.IsHoldingItem())
             {
                 player.SpawnKitchenItem(_platePrefab.GetItemReference());
 
-                _updatePlatesCount(newPlatesCount: _platesCount - 1);
+                _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value - 1);
             }
             // else if (Plate.IsIngridientAllowedOnPlate(player.GetCurrentItemHeld().GetItemReference()))
             // {
@@ -47,9 +57,17 @@ public class PlateCounter : BaseCounter
         }
     }
 
-    private void _updatePlatesCount(int newPlatesCount)
+    [ServerRpc(RequireOwnership = false)]
+    private void _updatePlatesCountServerRpc(int newPlatesCount)
     {
-        _platesCount = newPlatesCount;
+        _platesCount.Value = newPlatesCount;
+        _triggerOnPlateNumberChangeClientRpc(newPlatesCount);
+    }
+
+    [ClientRpc]
+    private void _triggerOnPlateNumberChangeClientRpc(int newPlatesCount)
+    {
+        Debug.Log(newPlatesCount);
         OnPlateNumberChange?.Invoke(newPlatesCount);
     }
 }
