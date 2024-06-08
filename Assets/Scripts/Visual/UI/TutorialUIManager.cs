@@ -8,12 +8,12 @@ public class TutorialUIManager : MonoBehaviour
     {
         _tutorialPanel.SetActive(true);
 
-        GameManager.Instance.OnStartGame += _disableUI;
+        GameManager.Instance.OnLocalPlayerReady += _disableUI;
     }
 
     private void OnDestroy()
     {
-        GameManager.Instance.OnStartGame -= _disableUI;
+        GameManager.Instance.OnLocalPlayerReady -= _disableUI;
     }
 
     private void _disableUI()

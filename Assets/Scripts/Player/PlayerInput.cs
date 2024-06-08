@@ -23,7 +23,7 @@ public class PlayerInput : MonoBehaviour
         PauseGamepad
     }
 
-    public event Action OnInteractWaitingMode;
+    public event Action OnInteractDuringWaitingState;
 
     public event Action OnInteract;
     public event Action OnInteractAlternative;
@@ -85,7 +85,7 @@ public class PlayerInput : MonoBehaviour
         switch (GameManager.Instance.State)
         {
             case GameState.Waiting:
-                OnInteractWaitingMode?.Invoke();
+                OnInteractDuringWaitingState?.Invoke();
                 break;
             case GameState.Active:
                 OnInteract?.Invoke();

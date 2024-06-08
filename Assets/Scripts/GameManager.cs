@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.Netcode;
 using UnityEngine;
 
 public enum GameState 
@@ -10,16 +13,20 @@ public enum GameState
     Editing,
 }
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance;
 
     public event Action<GameState> OnStateChange;
     public event Action<bool> OnPause;
     public event Action OnStartGame;
+    public event Action OnLocalPlayerReady;
     public event Action<float> OnCountdownTimerChange;
 
-    public GameState State { get; private set; } = GameState.Waiting;
+    private Dictionary<ulong, bool> _platersReadyStatus = new();
+    private NetworkVariable<GameState> _state = new (value: GameState.Waiting);
+    public GameState State { get { return _state.Value; } }
+
     private TimingTimer _countdownTimer = new (defaultTimerValue: 3f);
     public bool IsPaused { get; private set; } = false;
 
@@ -38,28 +45,32 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         PlayerInput.Instance.OnPausePressed += _pauseGame;
-        PlayerInput.Instance.OnInteractWaitingMode += _startGame;
+        PlayerInput.Instance.OnInteractDuringWaitingState += _setLocalPlayerReady;
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
+        base.OnDestroy();
+
         PlayerInput.Instance.OnPausePressed -= _pauseGame;
-        PlayerInput.Instance.OnInteractWaitingMode -= _startGame;
+        PlayerInput.Instance.OnInteractDuringWaitingState -= _setLocalPlayerReady;
     }   
 
     private void Update()
     {
-        switch(State)
+        if (!IsServer) return;
+
+        switch(_state.Value)
         {
             case GameState.Waiting:
                 break;
             case GameState.Countdown:
                 _countdownTimer.SubtractTime(Time.deltaTime);
-                OnCountdownTimerChange?.Invoke(_countdownTimer.Timer);
+                _triggerOnCountdownEventClientRpc(_countdownTimer.Timer);
 
                 if (_countdownTimer.Timer <= 0f)
                 {
-                    _changeState(GameState.Active);
+                    _changeStateServerRpc(GameState.Active);
                     _countdownTimer.ResetTimer();
                 }
                 break;
@@ -72,10 +83,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void _changeState(GameState newState)
+    [ServerRpc]
+    private void _changeStateServerRpc(GameState newState)
     {
-        State = newState;
-        OnStateChange?.Invoke(newState);
+        _state.Value = newState;
+        _triggerOnChangeStateEventClientRpc(newState);
     }
 
     private void _pauseGame()
@@ -86,10 +98,60 @@ public class GameManager : MonoBehaviour
         OnPause?.Invoke(IsPaused);
     }
 
-    private void _startGame()
+    private void _setLocalPlayerReady()
     {
-        _changeState(GameState.Countdown);
+        _setPlayerReadyServerRpc();
+
+        OnLocalPlayerReady?.Invoke();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _setPlayerReadyServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _setPlayerReadyClientRpc(rpcParams.Receive.SenderClientId);
+
+        if (_areAllPlayersReady())
+        {
+            _changeStateServerRpc(GameState.Countdown);
+            _triggerOnStartGameEventClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void _setPlayerReadyClientRpc(ulong playerId)
+    {
+        _platersReadyStatus[playerId] = true;
+    }
+
+    [ClientRpc]
+    private void _triggerOnStartGameEventClientRpc()
+    {
         OnStartGame?.Invoke();
+    }
+
+    [ClientRpc]
+    private void _triggerOnChangeStateEventClientRpc(GameState newState)
+    {
+        OnStateChange?.Invoke(newState);
+    }
+
+    [ClientRpc]
+    private void _triggerOnCountdownEventClientRpc(float countdownTime)
+    {
+        OnCountdownTimerChange?.Invoke(countdownTime);
+    }
+
+    private bool _areAllPlayersReady()
+    {
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+        {
+            if (!_platersReadyStatus.Keys.Contains(clientId) || !_platersReadyStatus[clientId])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void UnPauseGame()
@@ -97,26 +159,5 @@ public class GameManager : MonoBehaviour
         IsPaused = false;
         Time.timeScale = 1;
         OnPause?.Invoke(IsPaused);
-    }
-}
-
-struct TimingTimer
-{
-    public float Timer { get; private set; }
-    public float DefaultTimerValue;
-
-    public TimingTimer (float defaultTimerValue){
-        Timer = defaultTimerValue;
-        DefaultTimerValue = defaultTimerValue;
-    }
-
-    public void SubtractTime(float timeAmount)
-    {
-        Timer -= timeAmount;
-    }
-
-    public void ResetTimer()
-    {
-        Timer = DefaultTimerValue;
     }
 }
