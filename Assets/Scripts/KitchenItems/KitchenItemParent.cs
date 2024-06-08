@@ -12,6 +12,7 @@ public class KitchenItemParent : NetworkBehaviour
     public event Action OnItemDrop;
     public void TriggerOnItemDrop () => OnItemDrop?.Invoke();
 
+    // TODO: keep track of this item on network so that late joined players have this reference
     private KitchenItem _currentItemHeld;
 
     public KitchenItem GetCurrentItemHeld() => _currentItemHeld;
@@ -110,10 +111,19 @@ public class KitchenItemParent : NetworkBehaviour
     {
         if (!parent1.IsHoldingItem() || !parent2.IsHoldingItem()) return false;
 
-        return (
-            _tryAddIngredientToPlateOwner(plateOwner: parent1, ingredient: parent2.GetCurrentItemHeld().GetItemReference()) || 
-            _tryAddIngredientToPlateOwner(plateOwner: parent2, ingredient: parent1.GetCurrentItemHeld().GetItemReference())
-        );
+        if (_tryAddIngredientToPlateOwner(plateOwner: parent1, ingredient: parent2.GetCurrentItemHeld().GetItemReference()))
+        {
+            parent2.DestroyCurrentItemHeld();
+            return true;
+        }
+
+        if (_tryAddIngredientToPlateOwner(plateOwner: parent2, ingredient: parent1.GetCurrentItemHeld().GetItemReference()))
+        {
+            parent1.DestroyCurrentItemHeld();
+            return true;
+        }
+
+        return false;
     }   
 
     public static bool TryAddIngredientToPlate(KitchenItemParent parent, KitchenItemSO kitchenItem)

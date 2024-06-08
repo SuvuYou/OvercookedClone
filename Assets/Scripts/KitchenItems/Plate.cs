@@ -5,23 +5,46 @@ using UnityEngine;
 
 public class Plate : KitchenItem
 {
-    public event Action<KitchenItemSO> OnAddIngredient;
-    static private List<KitchenItemSO> ProhibitedIngredients = new ();
+    public event Action<List<KitchenItemSO>> OnIngredientsChange;
+    static private List<KitchenItemSO> AllowedIngredients = new ();
 
-    [SerializeField] private List<KitchenItemSO> _prohibitedIngredients;
-    public List<KitchenItemSO> Ingredients {get; private set;} = new();
+    [SerializeField] private List<KitchenItemSO> _allowedIngredients;
+    public List<KitchenItemSO> Ingredients {get; private set;}
+    
+    private NetworkList<int> _ingredientsIndices;
 
     private void Awake()
     {
-        if (ProhibitedIngredients.Count == 0)
+        if (AllowedIngredients.Count == 0)
         {
-            ProhibitedIngredients = _prohibitedIngredients;
+            AllowedIngredients = _allowedIngredients;
+        }
+
+        Ingredients = new();
+        _ingredientsIndices = new NetworkList<int> ();
+    }
+
+    private void Update()
+    {
+        if (IsClient)
+        {
+            if (_ingredientsIndices.Count != Ingredients.Count)
+            {
+                Ingredients.Clear();
+
+                foreach (int index in _ingredientsIndices)
+                {
+                    Ingredients.Add(AllowedIngredients[index]);  
+                }
+
+                OnIngredientsChange?.Invoke(Ingredients);
+            }
         }
     }
     
     public bool TryAddIngredientOnNetwork(KitchenItemSO ingredient)
     {
-        if (_prohibitedIngredients.Contains(ingredient) || Ingredients.Contains(ingredient))
+        if (!AllowedIngredients.Contains(ingredient) || Ingredients.Contains(ingredient))
         {
             return false;
         }
@@ -36,25 +59,24 @@ public class Plate : KitchenItem
     [ServerRpc(RequireOwnership = false)]
     private void _addIngredientServerRpc(int kitchenItemIndex)
     {
-        _addIngredientClientRpc(kitchenItemIndex);
+        KitchenItemSO ingredient = KitchenItemsList.Instance.Items[kitchenItemIndex];
+        _ingredientsIndices.Add(AllowedIngredients.IndexOf(ingredient));
+        _addIngredientClientRpc();
     }
 
     [ClientRpc]
-    private void _addIngredientClientRpc(int kitchenItemIndex)
+    private void _addIngredientClientRpc()
     {
-        _addIngredientByKitchenItemIndex(kitchenItemIndex);
+        _triggerOnAddIngredientEvents();
     }
 
-    private void _addIngredientByKitchenItemIndex(int kitchenItemIndex)
+    private void _triggerOnAddIngredientEvents()
     {
-        KitchenItemSO ingredient = KitchenItemsList.Instance.Items[kitchenItemIndex];
         SoundManager.SoundEvents.TriggerOnObjectPickupSound(transform.position);
-        Ingredients.Add(ingredient);
-        OnAddIngredient?.Invoke(ingredient);
     }
 
     public static bool IsIngridientAllowedOnPlate(KitchenItemSO ingredient)
     {
-        return !ProhibitedIngredients.Contains(ingredient);
+        return AllowedIngredients.Contains(ingredient);
     }
 }

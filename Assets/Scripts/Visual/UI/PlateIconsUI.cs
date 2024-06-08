@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlateIconsUI : MonoBehaviour
@@ -8,18 +9,29 @@ public class PlateIconsUI : MonoBehaviour
     private void Awake()
     {
         _iconTemplate.SetActive(false);
-        _plate.OnAddIngredient += _spawnIngredientIcon;
+        _plate.OnIngredientsChange += _spawnIngredientIcons;
     }
 
     private void OnDestroy()
     {
-        _plate.OnAddIngredient -= _spawnIngredientIcon;
+        _plate.OnIngredientsChange -= _spawnIngredientIcons;
     }
 
-    private void _spawnIngredientIcon(KitchenItemSO ingredient)
+    private void _spawnIngredientIcons(List<KitchenItemSO> ingredients)
     {
-        GameObject icon = Instantiate(_iconTemplate, transform);
-        icon.GetComponent<PlateIconTemplateUI>().SetIconSprite(ingredient.IconSprite);
-        icon.SetActive(true);
+        foreach (Transform child in transform)
+        {
+            if (child != _iconTemplate.transform)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        foreach (KitchenItemSO ingredient in ingredients)
+        {
+            GameObject icon = Instantiate(_iconTemplate, transform);
+            icon.GetComponent<PlateIconTemplateUI>().SetIconSprite(ingredient.IconSprite);
+            icon.SetActive(true);
+        }
     }
 }

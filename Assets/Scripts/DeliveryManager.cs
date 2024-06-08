@@ -15,7 +15,7 @@ public class DeliveryManager : NetworkBehaviour
 
     [SerializeField] private AvailableRecipesListSO _availableRecipesList;
     private List<RecipeSO> _currentWaitingRecipeList = new();
-    private NetworkList<int> _currentWaitingRecipeIndeciesList;
+    private NetworkList<int> _currentWaitingRecipeIndicesList;
 
     private const int MAX_RECIPE_WAITING_COUNT = 4; 
     // TODO: possible make random
@@ -30,7 +30,7 @@ public class DeliveryManager : NetworkBehaviour
         }
         else
         {
-            _currentWaitingRecipeIndeciesList = new NetworkList<int>();
+            _currentWaitingRecipeIndicesList = new NetworkList<int> ();
             Instance = this;
         }
     }
@@ -44,9 +44,16 @@ public class DeliveryManager : NetworkBehaviour
 
         if (IsClient)
         {
-            if (_currentWaitingRecipeList.Count != _currentWaitingRecipeIndeciesList.Count)
+            if (_currentWaitingRecipeIndicesList.Count != _currentWaitingRecipeList.Count)
             {
-                _syncRecipeListWithNetworkList();
+                _currentWaitingRecipeList.Clear();
+
+                foreach (int index in _currentWaitingRecipeIndicesList)
+                {
+                    _currentWaitingRecipeList.Add(_availableRecipesList.AvailableRecipes[index]);
+                }
+
+                OnAddRecipe?.Invoke();
             }
         }
 
@@ -59,33 +66,15 @@ public class DeliveryManager : NetworkBehaviour
                 _addingRecipeTimer.ResetTimer();
 
                 int randRecipeIndex = UnityEngine.Random.Range(0, _availableRecipesList.AvailableRecipes.Count);
-                _currentWaitingRecipeIndeciesList.Add(randRecipeIndex);
+                _currentWaitingRecipeIndicesList.Add(randRecipeIndex);
             }
         }
-    }
-
-    private void _syncRecipeListWithNetworkList()
-    {
-        _currentWaitingRecipeList.Clear();
-
-        foreach (int recipeIndex in _currentWaitingRecipeIndeciesList)
-        {
-            _addRecipeToWaitingListByIndex(recipeIndex);   
-        }
-
-        OnAddRecipe?.Invoke();
-    }
-
-    private void _addRecipeToWaitingListByIndex(int recipeIndex)
-    {
-        RecipeSO newRecipe = _availableRecipesList.AvailableRecipes[recipeIndex];
-        _currentWaitingRecipeList.Add(newRecipe);
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void _deliverSuccessfulRecipeServerRpc(int recipeIndexAtNetworkList)
     {
-        _currentWaitingRecipeIndeciesList.RemoveAt(recipeIndexAtNetworkList);
+        _currentWaitingRecipeList.RemoveAt(recipeIndexAtNetworkList);
         _deliverSuccessfulRecipeClientRpc();
     }
 
@@ -119,7 +108,8 @@ public class DeliveryManager : NetworkBehaviour
 
             if (plate.Ingredients.OrderBy(ing => ing.ItemName).SequenceEqual(recipe.Ingredients.OrderBy(ing => ing.ItemName)))
             {
-                _deliverSuccessfulRecipeServerRpc(_currentWaitingRecipeList.FindIndex((RecipeSO match) => match == recipe));
+                _deliverSuccessfulRecipeServerRpc(_currentWaitingRecipeList.IndexOf(recipe));
+
                 return true;
             }
         }
