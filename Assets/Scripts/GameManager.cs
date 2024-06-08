@@ -21,14 +21,18 @@ public class GameManager : NetworkBehaviour
     public event Action<bool> OnPause;
     public event Action OnStartGame;
     public event Action OnLocalPlayerReady;
+    public event Action<bool> OnLocalPlayerPause;
     public event Action<float> OnCountdownTimerChange;
 
-    private Dictionary<ulong, bool> _platersReadyStatus = new();
+    private Dictionary<ulong, bool> _playersReadyStatus = new();
+    private Dictionary<ulong, bool> _playersPauseStatus = new();
     private NetworkVariable<GameState> _state = new (value: GameState.Waiting);
     public GameState State { get { return _state.Value; } }
 
     private TimingTimer _countdownTimer = new (defaultTimerValue: 3f);
     public bool IsPaused { get; private set; } = false;
+
+    private bool _isLocalPlayerPaused = false;
 
     private void Awake()
     {
@@ -44,7 +48,7 @@ public class GameManager : NetworkBehaviour
 
     private void Start()
     {
-        PlayerInput.Instance.OnPausePressed += _pauseGame;
+        PlayerInput.Instance.OnPausePressed += _setLocalPlayerPause;
         PlayerInput.Instance.OnInteractDuringWaitingState += _setLocalPlayerReady;
     }
 
@@ -52,7 +56,7 @@ public class GameManager : NetworkBehaviour
     {
         base.OnDestroy();
 
-        PlayerInput.Instance.OnPausePressed -= _pauseGame;
+        PlayerInput.Instance.OnPausePressed -= _setLocalPlayerPause;
         PlayerInput.Instance.OnInteractDuringWaitingState -= _setLocalPlayerReady;
     }   
 
@@ -90,12 +94,47 @@ public class GameManager : NetworkBehaviour
         _triggerOnChangeStateEventClientRpc(newState);
     }
 
-    private void _pauseGame()
+    private void _setLocalPlayerPause()
     {
-        IsPaused = !IsPaused;
+        _setPlayerPauseServerRpc();
 
-        Time.timeScale = IsPaused ? 0 : 1;
-        OnPause?.Invoke(IsPaused);
+        _isLocalPlayerPaused = !_isLocalPlayerPaused;
+
+        OnLocalPlayerPause?.Invoke(_isLocalPlayerPaused);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _setPlayerPauseServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _setPlayerPauseClientRpc(rpcParams.Receive.SenderClientId);
+
+        bool newIsGamePaused = _arePlayersPaused();
+
+        _setIsGamePausedClientRpc(newIsGamePaused);
+    }
+
+    [ClientRpc]
+    private void _setPlayerPauseClientRpc(ulong playerId)
+    {
+        if (!_playersPauseStatus.Keys.Contains(playerId)) _playersPauseStatus[playerId] = true;
+        else _playersPauseStatus[playerId] = !_playersPauseStatus[playerId];
+    }
+
+    [ClientRpc]
+    private void _setIsGamePausedClientRpc(bool newIsGamePaused)
+    {
+        if (IsPaused != newIsGamePaused)
+        {
+            OnPause?.Invoke(newIsGamePaused);
+            Time.timeScale = newIsGamePaused ? 0 : 1;
+        }
+
+        IsPaused = newIsGamePaused;
+    }
+
+    public void UnPauseGame()
+    {
+        _setLocalPlayerPause();
     }
 
     private void _setLocalPlayerReady()
@@ -120,7 +159,7 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void _setPlayerReadyClientRpc(ulong playerId)
     {
-        _platersReadyStatus[playerId] = true;
+        _playersReadyStatus[playerId] = true;
     }
 
     [ClientRpc]
@@ -145,7 +184,7 @@ public class GameManager : NetworkBehaviour
     {
         foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
         {
-            if (!_platersReadyStatus.Keys.Contains(clientId) || !_platersReadyStatus[clientId])
+            if (!_playersReadyStatus.Keys.Contains(clientId) || !_playersReadyStatus[clientId])
             {
                 return false;
             }
@@ -154,10 +193,16 @@ public class GameManager : NetworkBehaviour
         return true;
     }
 
-    public void UnPauseGame()
+    private bool _arePlayersPaused()
     {
-        IsPaused = false;
-        Time.timeScale = 1;
-        OnPause?.Invoke(IsPaused);
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+        {
+            if (_playersPauseStatus.Keys.Contains(clientId) && _playersPauseStatus[clientId])
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

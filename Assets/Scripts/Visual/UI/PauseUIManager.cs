@@ -29,7 +29,7 @@ public class PauseUIManager : MonoBehaviour
             SceneLoader.LoadScene(Scene.MainMenu);
         });
 
-        PlayerInput.Instance.OnPausePressed += _handleVisibility;
+        GameManager.Instance.OnLocalPlayerPause += _handleVisibility;
     }
 
     private void OnDestroy ()
@@ -38,18 +38,18 @@ public class PauseUIManager : MonoBehaviour
         _settingsButton.onClick.RemoveAllListeners(); 
         _mainMenuButton.onClick.RemoveAllListeners(); 
 
-        PlayerInput.Instance.OnPausePressed -= _handleVisibility;
+        GameManager.Instance.OnLocalPlayerPause -= _handleVisibility;
     }
 
-    private void _handleVisibility()
+    private void _handleVisibility(bool isPaused)
     {
-        if (_pausePanel.activeSelf)
+        if (isPaused)
         {
-            _pausePanel.SetActive(false);
+            DisplayPauseUI();
         }
         else
         {
-            DisplayPauseUI();
+            _pausePanel.SetActive(false);
         }
     }
 

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class WaitingForPlayersUIManager : MonoBehaviour
+public class WaitingForPlayersReadyUIManagery : MonoBehaviour
 {
     [SerializeField] private GameObject _waitingForPlayersPanel;
 

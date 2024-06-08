@@ -28,7 +28,7 @@ public class StoveCounterSound : MonoBehaviour
 
     private void _turnStoveSizzleOn(bool shouldUpdateCache = true)
     {
-        if (shouldUpdateCache) _isSoundBeingPlayedCached = false;
+        if (shouldUpdateCache) _isSoundBeingPlayedCached = true;
         _audioSource.volume = SoundManager.Volume.Volume;
         _audioSource.Play();
     }
