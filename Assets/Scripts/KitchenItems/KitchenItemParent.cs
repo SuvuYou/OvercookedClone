@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,11 +13,50 @@ public class KitchenItemParent : NetworkBehaviour
     public event Action OnItemDrop;
     public void TriggerOnItemDrop () => OnItemDrop?.Invoke();
 
-    // TODO: keep track of this item on network so that late joined players have this reference
     private KitchenItem _currentItemHeld;
+    private NetworkVariable<NetworkObjectReference> _currentItemHeldNetworkReference = new();
 
     public KitchenItem GetCurrentItemHeld() => _currentItemHeld;
+    public NetworkObject GetNetworkObjectReference() => NetworkObject;
     public bool IsHoldingItem() => _currentItemHeld != null;
+
+    public override void OnNetworkSpawn()
+    {
+        _currentItemHeldNetworkReference.OnValueChanged += _onCurrentItemHeldReferenceChange;
+
+        StartCoroutine(_afterNetworkSpawn());
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        _currentItemHeldNetworkReference.OnValueChanged -= _onCurrentItemHeldReferenceChange;
+    }
+
+    private IEnumerator _afterNetworkSpawn()
+    {
+        // Wait until the end of the frame to ensure _currentItemHeldNetworkReference NetworkVariable initialization is done
+        yield return new WaitForEndOfFrame();
+
+        _syncCurrentItemHeldWithNetworkReference(_currentItemHeldNetworkReference.Value);
+    }
+
+    private void _onCurrentItemHeldReferenceChange (NetworkObjectReference prev, NetworkObjectReference next)
+    {
+        _syncCurrentItemHeldWithNetworkReference(next);
+    }
+
+    private void _syncCurrentItemHeldWithNetworkReference (NetworkObjectReference reference)
+    {
+        if (!reference.TryGet(out NetworkObject netObj) || !netObj.TryGetComponent(out KitchenItem item))
+        {
+            _currentItemHeld = null;
+
+            return;
+        }
+
+        _currentItemHeld = item;
+        item.SetTargetToFollow(_itemSpawnPlaceholder);
+    }
 
     // TODO: Fix delay issues;
     public void SetCurrentItemHeld(KitchenItem newItem) 
@@ -34,31 +74,27 @@ public class KitchenItemParent : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void _setCurrentItemHeldServerRpc(NetworkObjectReference kitchenItem) 
     {
-        _setCurrentItemHeldClientRpc(kitchenItem);
+        _currentItemHeldNetworkReference.Value = kitchenItem;
+        _triggerOnSetCurrentItemEventsClientRpc();
     } 
-    
-    [ClientRpc]
-    private void _setCurrentItemHeldClientRpc(NetworkObjectReference kitchenItem) 
-    {
-        if (kitchenItem.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out KitchenItem item))
-        {
-            _currentItemHeld = item;
-            item.SetTargetToFollow(_itemSpawnPlaceholder);
-            TriggerOnItemPickup();
-        }
-    }
 
     [ServerRpc(RequireOwnership = false)]
     private void _resetCurrentItemHeldServerRpc() 
     {
-        _resetCurrentItemHeldClientRpc();
+        _currentItemHeldNetworkReference.Value = default;
+        _triggerOnReetCurrentItemEventsClientRpc();
     } 
+
+    [ClientRpc]
+    private void _triggerOnSetCurrentItemEventsClientRpc() 
+    {
+        this.TriggerOnItemPickup();
+    }
     
     [ClientRpc]
-    private void _resetCurrentItemHeldClientRpc() 
+    private void _triggerOnReetCurrentItemEventsClientRpc() 
     {
-        _currentItemHeld = null;
-        TriggerOnItemDrop();
+        this.TriggerOnItemDrop();
     }
 
     public void DestroyCurrentItemHeld()
@@ -72,17 +108,12 @@ public class KitchenItemParent : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void _destroyCurrentItemHeldServerRpc() 
     {
-        if (_currentItemHeld.TryGetComponent(out NetworkObject netObj))
+        if (_currentItemHeldNetworkReference.Value.TryGet(out NetworkObject netObj))
         {
             netObj.Despawn(destroy: true);
         }
     } 
     
-    public NetworkObject GetNetworkObjectReference()
-    {
-        return NetworkObject;
-    }
-
     public void SpawnKitchenItem(KitchenItemSO kithcenItem)
     {
         SpawnKitchenItemOnKitchenItemParentServerRpc(KitchenItemsList.Instance.GetIndexOfItem(kithcenItem), kitchenItemParentRef: NetworkObject);

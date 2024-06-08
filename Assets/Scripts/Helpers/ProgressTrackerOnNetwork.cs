@@ -11,17 +11,13 @@ public class ProgressTrackerOnNetwork : NetworkBehaviour
     private NetworkVariable<float> _progress = new (value: 0);
     private NetworkVariable<float> _maxProgress = new (value: 0);
 
-    private void Update()
+    public override void OnNetworkSpawn()
     {
-        if (_progress.Value != Progress)
-        {
-            _progressTracker.TriggerProgressUpdate(_progress.Value);
-        }
+        _progressTracker.TriggerProgressUpdate(_progress.Value);
+        _progressTracker.SetMaxProgress(_maxProgress.Value);
 
-        if (_maxProgress.Value != Progress)
-        {
-            _progressTracker.SetMaxProgress(_maxProgress.Value);
-        }
+        _progress.OnValueChanged += (float prev, float newValue) => _progressTracker.TriggerProgressUpdate(newValue);
+        _maxProgress.OnValueChanged += (float prev, float newValue) => _progressTracker.SetMaxProgress(newValue);
     }
 
     [ServerRpc(RequireOwnership = false)]
