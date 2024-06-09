@@ -1,7 +1,8 @@
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerSound : MonoBehaviour
+public class PlayerSound : NetworkBehaviour
 {
     [SerializeField] private PlayerStateSO _playerState;
 
@@ -10,6 +11,11 @@ public class PlayerSound : MonoBehaviour
 
     private void Update()
     {
+        if (!IsOwner)
+        {
+            return;
+        }
+
         if (_playerState.IsWalking && !_isPlayingSound)
         {
             StartCoroutine(_triggerWalkingSoundCoroutine());

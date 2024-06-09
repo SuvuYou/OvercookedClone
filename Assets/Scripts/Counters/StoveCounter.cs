@@ -38,24 +38,26 @@ public class StoveCounter : BaseCounter
 
     public override void Interact(KitchenItemParent player)
     {
-        if (KitchenItemParent.TryAddIngredientToPlate(player, this))
+        if(!player.IsHoldingItem())
+        {
+            _fryingProgress.SetProgressServerRpc(0);
+            _switchStateServerRpc(State.Idle); 
+
+            KitchenItemParent.SwapItemsOfTwoOwners(player, this);
+
+            return;
+        }
+
+        if (KitchenItemParent.TryAddIngredientToPlateOwner(player, this))
         {
             _fryingProgress.SetProgressServerRpc(0);
             _switchStateServerRpc(State.Idle); 
         }
-
-        if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsFryable()) 
+        else if (player.GetCurrentItemHeld().GetItemReference().IsFryable()) 
         {
             _fryingProgress.SetProgressServerRpc(0);
             _fryingProgress.SetMaxProgressServerRpc(player.GetCurrentItemHeld().GetItemReference().FryableSO.FryingTimer);   
             _switchStateServerRpc(State.Frying);
-
-            KitchenItemParent.SwapItemsOfTwoOwners(player, this);
-        }
-        else if (!player.IsHoldingItem()) 
-        {
-            _fryingProgress.SetProgressServerRpc(0);
-            _switchStateServerRpc(State.Idle); 
 
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
         }

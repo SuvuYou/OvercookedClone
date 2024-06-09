@@ -31,14 +31,16 @@ public class GameManager : NetworkBehaviour
 
     private TimingTimer _countdownTimer = new (defaultTimerValue: 3f);
     public bool IsPaused { get; private set; } = false;
+    public bool IsLocalPaused { get; private set; } = false;
 
-    private bool _isLocalPlayerPaused = false;
+    [SerializeField] private List<KitchenItemSO> _allowedIngredients;
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            Plate.InitAllowedIngridients(_allowedIngredients);
         }
         else
         {
@@ -96,17 +98,20 @@ public class GameManager : NetworkBehaviour
 
     private void _setLocalPlayerPause()
     {
+        IsLocalPaused = !IsLocalPaused;
+
+        OnLocalPlayerPause?.Invoke(IsLocalPaused);
+
         _setPlayerPauseServerRpc();
-
-        _isLocalPlayerPaused = !_isLocalPlayerPaused;
-
-        OnLocalPlayerPause?.Invoke(_isLocalPlayerPaused);
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void _setPlayerPauseServerRpc(ServerRpcParams rpcParams = default)
     {
-        _setPlayerPauseClientRpc(rpcParams.Receive.SenderClientId);
+        ulong playerId = rpcParams.Receive.SenderClientId; 
+
+        if (!_playersPauseStatus.Keys.Contains(playerId)) _playersPauseStatus[playerId] = true;
+        else _playersPauseStatus[playerId] = !_playersPauseStatus[playerId];
 
         bool newIsGamePaused = _arePlayersPaused();
 
@@ -114,27 +119,25 @@ public class GameManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void _setPlayerPauseClientRpc(ulong playerId)
-    {
-        if (!_playersPauseStatus.Keys.Contains(playerId)) _playersPauseStatus[playerId] = true;
-        else _playersPauseStatus[playerId] = !_playersPauseStatus[playerId];
-    }
-
-    [ClientRpc]
     private void _setIsGamePausedClientRpc(bool newIsGamePaused)
     {
         if (IsPaused != newIsGamePaused)
         {
-            OnPause?.Invoke(newIsGamePaused);
             Time.timeScale = newIsGamePaused ? 0 : 1;
         }
 
+        OnPause?.Invoke(newIsGamePaused);
         IsPaused = newIsGamePaused;
     }
 
-    public void UnPauseGame()
+    public void UnPauseGame(bool isDisconecting = false)
     {
         _setLocalPlayerPause();
+
+        if (isDisconecting)
+        {
+            Time.timeScale = 1;
+        }
     }
 
     private void _setLocalPlayerReady()
@@ -147,19 +150,13 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void _setPlayerReadyServerRpc(ServerRpcParams rpcParams = default)
     {
-        _setPlayerReadyClientRpc(rpcParams.Receive.SenderClientId);
+        _playersReadyStatus[rpcParams.Receive.SenderClientId] = true;
 
         if (_areAllPlayersReady())
         {
             _changeStateServerRpc(GameState.Countdown);
             _triggerOnStartGameEventClientRpc();
         }
-    }
-
-    [ClientRpc]
-    private void _setPlayerReadyClientRpc(ulong playerId)
-    {
-        _playersReadyStatus[playerId] = true;
     }
 
     [ClientRpc]

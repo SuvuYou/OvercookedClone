@@ -1,27 +1,24 @@
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEngine;
 
 public class Plate : KitchenItem
 {
     public event Action<List<KitchenItemSO>> OnIngredientsChange;
-    static private List<KitchenItemSO> AllowedIngredients = new ();
-
-    [SerializeField] private List<KitchenItemSO> _allowedIngredients;
+    static private List<KitchenItemSO> AllowedIngredients;
     public List<KitchenItemSO> Ingredients {get; private set;}
     
     private NetworkList<int> _ingredientsIndices;
 
     private void Awake()
     {
-        if (AllowedIngredients.Count == 0)
-        {
-            AllowedIngredients = _allowedIngredients;
-        }
-
         Ingredients = new();
         _ingredientsIndices = new NetworkList<int> ();
+    }
+
+    public static void InitAllowedIngridients(List<KitchenItemSO> allowedIngredients)
+    {
+        AllowedIngredients = allowedIngredients;
     }
 
     private void Update()
@@ -61,18 +58,6 @@ public class Plate : KitchenItem
     {
         KitchenItemSO ingredient = KitchenItemsList.Instance.Items[kitchenItemIndex];
         _ingredientsIndices.Add(AllowedIngredients.IndexOf(ingredient));
-        _addIngredientClientRpc();
-    }
-
-    [ClientRpc]
-    private void _addIngredientClientRpc()
-    {
-        _triggerOnAddIngredientEvents();
-    }
-
-    private void _triggerOnAddIngredientEvents()
-    {
-        SoundManager.SoundEvents.TriggerOnObjectPickupSound(transform.position);
     }
 
     public static bool IsIngridientAllowedOnPlate(KitchenItemSO ingredient)

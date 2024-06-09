@@ -13,7 +13,15 @@ public class ProgressTrackerSO : ScriptableObject
     {
         Progress = newProgress;
 
-        ProgressNormalized = Progress / MaxProgress; 
+        if (MaxProgress == 0)
+        {
+            ProgressNormalized = 0; 
+        }
+        else
+        {
+            ProgressNormalized = Progress / MaxProgress; 
+        }
+
         OnUpdateProgress?.Invoke(ProgressNormalized);
     }
 

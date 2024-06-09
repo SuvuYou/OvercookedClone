@@ -8,10 +8,16 @@ public class KitchenItemParent : NetworkBehaviour
     [SerializeField] private Transform _itemSpawnPlaceholder;
 
     public event Action OnItemPickup;
-    public void TriggerOnItemPickup () => OnItemPickup?.Invoke();
+    public void TriggerOnItemPickup () 
+    {
+        _triggerOnPickupServerRpc();
+    }
 
     public event Action OnItemDrop;
-    public void TriggerOnItemDrop () => OnItemDrop?.Invoke();
+    public void TriggerOnItemDrop ()
+    {
+        _triggerOnDropServerRpc();
+    } 
 
     private KitchenItem _currentItemHeld;
     private NetworkVariable<NetworkObjectReference> _currentItemHeldNetworkReference = new();
@@ -59,8 +65,7 @@ public class KitchenItemParent : NetworkBehaviour
     }
 
     // TODO: Fix delay issues;
-    // TODO: Fix Grogress bar AABA;
-    // TODO: Fix Sound;
+    // TODO: figure out how to trigger sound effects and make it readable
     public void SetCurrentItemHeld(KitchenItem newItem) 
     {
         if (newItem != null)
@@ -69,7 +74,7 @@ public class KitchenItemParent : NetworkBehaviour
         }
         else
         {
-            _resetCurrentItemHeldServerRpc();
+            _resetCurrentItemHeldServerRpc(triggerDropEvent: true);
         }
     } 
 
@@ -77,26 +82,41 @@ public class KitchenItemParent : NetworkBehaviour
     private void _setCurrentItemHeldServerRpc(NetworkObjectReference kitchenItem) 
     {
         _currentItemHeldNetworkReference.Value = kitchenItem;
-        _triggerOnSetCurrentItemEventsClientRpc();
+        _triggerOnPickupClientRpc();
     } 
 
     [ServerRpc(RequireOwnership = false)]
-    private void _resetCurrentItemHeldServerRpc() 
+    private void _resetCurrentItemHeldServerRpc(bool triggerDropEvent) 
     {
         _currentItemHeldNetworkReference.Value = default;
-        _triggerOnReetCurrentItemEventsClientRpc();
+        if (triggerDropEvent)
+        {
+            _triggerOnDropClientRpc();
+        }
     } 
 
-    [ClientRpc]
-    private void _triggerOnSetCurrentItemEventsClientRpc() 
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerOnPickupServerRpc() 
     {
-        this.TriggerOnItemPickup();
+        _triggerOnPickupClientRpc();
+    }
+
+    [ClientRpc]
+    private void _triggerOnPickupClientRpc() 
+    {
+        OnItemPickup?.Invoke();
     }
     
-    [ClientRpc]
-    private void _triggerOnReetCurrentItemEventsClientRpc() 
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerOnDropServerRpc() 
     {
-        this.TriggerOnItemDrop();
+        _triggerOnDropClientRpc();
+    }
+
+    [ClientRpc]
+    private void _triggerOnDropClientRpc() 
+    {
+        OnItemDrop?.Invoke();
     }
 
     public void DestroyCurrentItemHeld()
@@ -104,7 +124,7 @@ public class KitchenItemParent : NetworkBehaviour
         if (_currentItemHeld == null) return;
 
         _destroyCurrentItemHeldServerRpc();
-        _resetCurrentItemHeldServerRpc();
+        _resetCurrentItemHeldServerRpc(triggerDropEvent: false);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -121,6 +141,14 @@ public class KitchenItemParent : NetworkBehaviour
         SpawnKitchenItemOnKitchenItemParentServerRpc(KitchenItemsList.Instance.GetIndexOfItem(kithcenItem), kitchenItemParentRef: NetworkObject);
     }
 
+    public void SpawnKitchenItem(KitchenItemSO plate, KitchenItemSO ingredient)
+    {
+        int plateIndex = KitchenItemsList.Instance.GetIndexOfItem(plate);
+        int kitchenItemIndex = KitchenItemsList.Instance.GetIndexOfItem(ingredient);
+
+        SpawnPlateWithIngredientOnKitchenItemParentServerRpc(plateIndex, kitchenItemIndex, kitchenItemParentRef: NetworkObject);
+    }
+
     [ServerRpc(RequireOwnership = false)]
     private void SpawnKitchenItemOnKitchenItemParentServerRpc(int kitchenItemIndex, NetworkObjectReference kitchenItemParentRef)
     {
@@ -132,6 +160,22 @@ public class KitchenItemParent : NetworkBehaviour
         }
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void SpawnPlateWithIngredientOnKitchenItemParentServerRpc(int plateIndex, int kitchenItemIndex, NetworkObjectReference kitchenItemParentRef)
+    {
+        if (kitchenItemParentRef.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out KitchenItemParent parent))
+        {
+            KitchenItem plateItem = Instantiate(KitchenItemsList.Instance.Items[plateIndex].Prefab, parent.transform.position, Quaternion.identity);
+            plateItem.GetComponent<NetworkObject>().Spawn();
+            parent.SetCurrentItemHeld(plateItem);
+
+            if (plateItem.TryGetPlateComponent(out Plate plate))
+            {
+                plate.TryAddIngredientOnNetwork(KitchenItemsList.Instance.Items[kitchenItemIndex]);
+            }
+        }
+    }
+
     public static void SwapItemsOfTwoOwners(KitchenItemParent parent1, KitchenItemParent parent2)
     {  
         KitchenItem tempItem = parent1.GetCurrentItemHeld();
@@ -139,26 +183,34 @@ public class KitchenItemParent : NetworkBehaviour
         parent2.SetCurrentItemHeld(tempItem);
     }
 
-    public static bool TryAddIngredientToPlate(KitchenItemParent parent1, KitchenItemParent parent2)
+    public static bool TryAddIngredientToPlateOwner(KitchenItemParent parent1, KitchenItemParent parent2)
     {
         if (!parent1.IsHoldingItem() || !parent2.IsHoldingItem()) return false;
 
         if (_tryAddIngredientToPlateOwner(plateOwner: parent1, ingredient: parent2.GetCurrentItemHeld().GetItemReference()))
         {
             parent2.DestroyCurrentItemHeld();
+
+            parent1.TriggerOnItemPickup();
+            parent2.TriggerOnItemDrop();
+            
             return true;
         }
 
         if (_tryAddIngredientToPlateOwner(plateOwner: parent2, ingredient: parent1.GetCurrentItemHeld().GetItemReference()))
         {
             parent1.DestroyCurrentItemHeld();
+
+            parent2.TriggerOnItemPickup();
+            parent1.TriggerOnItemDrop();
+
             return true;
         }
 
         return false;
     }   
 
-    public static bool TryAddIngredientToPlate(KitchenItemParent parent, KitchenItemSO kitchenItem)
+    public static bool TryAddIngredientToPlateOwner(KitchenItemParent parent, KitchenItemSO kitchenItem)
     {
         if (!parent.IsHoldingItem()) return false;
 
@@ -173,8 +225,6 @@ public class KitchenItemParent : NetworkBehaviour
         {
             if (plate.TryAddIngredientOnNetwork(ingredient))
             {
-                plateOwner.TriggerOnItemPickup();
-
                 return true;
             }
         }

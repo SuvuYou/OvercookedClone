@@ -50,10 +50,14 @@ public class PlateCounter : BaseCounter
 
                 _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value - 1);
             }
-            // else if (Plate.IsIngridientAllowedOnPlate(player.GetCurrentItemHeld().GetItemReference()))
-            // {
-                // TODO: Potentialy allow player to pick up plate with ingredient in hand
-            // }
+            else if (Plate.IsIngridientAllowedOnPlate(player.GetCurrentItemHeld().GetItemReference()))
+            {
+                KitchenItemSO item = player.GetCurrentItemHeld().GetItemReference();
+                player.DestroyCurrentItemHeld();
+                player.SpawnKitchenItem(plate: _platePrefab.GetItemReference(), ingredient: item);
+                
+                _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value - 1);
+            }
         }
     }
 

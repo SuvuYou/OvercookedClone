@@ -10,7 +10,7 @@ public class CuttingCounter : BaseCounter
 
     public override void Interact(KitchenItemParent player)
     {
-        if (KitchenItemParent.TryAddIngredientToPlate(player, this))
+        if (KitchenItemParent.TryAddIngredientToPlateOwner(player, this))
         {
             _cuttingProgress.SetProgressServerRpc(0);
         }
@@ -39,7 +39,7 @@ public class CuttingCounter : BaseCounter
             if (this.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount == newCuttingProgress)
             {
                 KitchenItemSO slicedItem = this.GetCurrentItemHeld().GetItemReference().SliceableSO.SlicedPrefab.GetItemReference();
-                DestroyCurrentItemHeld();
+                this.DestroyCurrentItemHeld();
 
                 this.SpawnKitchenItem(slicedItem);
             }

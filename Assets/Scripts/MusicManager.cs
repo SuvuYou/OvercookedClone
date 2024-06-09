@@ -21,6 +21,8 @@ public class MusicManager : MonoBehaviour
         {
             Volume.SetVolume(INITIAL_VOLUME);
         }
+
+        _updateVolume(Volume.Volume);
     }
 
     private void Start()

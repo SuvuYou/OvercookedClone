@@ -17,7 +17,7 @@ public class CounterContainer : BaseCounter
 
         if (player.IsHoldingItem()) 
         {
-            if (KitchenItemParent.TryAddIngredientToPlate(player, _kitchenItemToSpawn))
+            if (KitchenItemParent.TryAddIngredientToPlateOwner(player, _kitchenItemToSpawn))
             {
                 _triggerEventOnNetworkServerRpc();
             }

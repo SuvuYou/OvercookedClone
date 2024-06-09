@@ -8088,6 +8088,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff438d4948d7053458e5b490723afb93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _allowedIngredients:
+  - {fileID: 11400000, guid: a75568b8daaff7048844d7fad07cb1a2, type: 2}
+  - {fileID: 11400000, guid: 70c2874ed99bc714490a028559822915, type: 2}
+  - {fileID: 11400000, guid: bd2c8128a53e62340b84d3350ca5368d, type: 2}
+  - {fileID: 11400000, guid: 5f7853aecfca67847aa996f0474c28e5, type: 2}
+  - {fileID: 11400000, guid: 5dee28757be7e4d4ea9fd08b648d30a9, type: 2}
 --- !u!4 &1146481968
 Transform:
   m_ObjectHideFlags: 0

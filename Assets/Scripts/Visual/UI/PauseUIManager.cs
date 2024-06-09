@@ -25,7 +25,7 @@ public class PauseUIManager : MonoBehaviour
         });
         _mainMenuButton.onClick.AddListener(() => 
         {
-            GameManager.Instance.UnPauseGame();
+            GameManager.Instance.UnPauseGame(isDisconecting: true);
             SceneLoader.LoadScene(Scene.MainMenu);
         });
 
