@@ -18,9 +18,9 @@ public class DeliveryManager : NetworkBehaviour
     private NetworkList<int> _currentWaitingRecipeIndicesList;
 
     private const int MAX_RECIPE_WAITING_COUNT = 4; 
-    // TODO: possible make random
-    private const float TIMEOUT_BETWEEN_RECIPE_ADDED = 4f; 
-    private TimingTimer _addingRecipeTimer = new(defaultTimerValue: TIMEOUT_BETWEEN_RECIPE_ADDED);
+    private const float MIN_TIMEOUT_BETWEEN_RECIPE_ADDED = 4f; 
+    private const float MAX_TIMEOUT_BETWEEN_RECIPE_ADDED = 8f; 
+    private TimingTimer _addingRecipeTimer = new(minDefaultTimerValue: MIN_TIMEOUT_BETWEEN_RECIPE_ADDED, maxDefaultTimerValue: MAX_TIMEOUT_BETWEEN_RECIPE_ADDED);
 
     private void Awake()
     {

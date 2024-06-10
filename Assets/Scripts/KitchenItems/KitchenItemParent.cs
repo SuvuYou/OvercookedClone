@@ -65,7 +65,6 @@ public class KitchenItemParent : NetworkBehaviour
     }
 
     // TODO: Fix delay issues;
-    // TODO: figure out how to trigger sound effects and make it readable
     public void SetCurrentItemHeld(KitchenItem newItem) 
     {
         if (newItem != null)
@@ -74,7 +73,8 @@ public class KitchenItemParent : NetworkBehaviour
         }
         else
         {
-            _resetCurrentItemHeldServerRpc(triggerDropEvent: true);
+            _resetCurrentItemHeldServerRpc();
+            _triggerOnDropServerRpc();
         }
     } 
 
@@ -83,16 +83,6 @@ public class KitchenItemParent : NetworkBehaviour
     {
         _currentItemHeldNetworkReference.Value = kitchenItem;
         _triggerOnPickupClientRpc();
-    } 
-
-    [ServerRpc(RequireOwnership = false)]
-    private void _resetCurrentItemHeldServerRpc(bool triggerDropEvent) 
-    {
-        _currentItemHeldNetworkReference.Value = default;
-        if (triggerDropEvent)
-        {
-            _triggerOnDropClientRpc();
-        }
     } 
 
     [ServerRpc(RequireOwnership = false)]
@@ -124,7 +114,7 @@ public class KitchenItemParent : NetworkBehaviour
         if (_currentItemHeld == null) return;
 
         _destroyCurrentItemHeldServerRpc();
-        _resetCurrentItemHeldServerRpc(triggerDropEvent: false);
+        _resetCurrentItemHeldServerRpc();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -134,6 +124,12 @@ public class KitchenItemParent : NetworkBehaviour
         {
             netObj.Despawn(destroy: true);
         }
+    } 
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _resetCurrentItemHeldServerRpc() 
+    {
+        _currentItemHeldNetworkReference.Value = default;
     } 
     
     public void SpawnKitchenItem(KitchenItemSO kithcenItem)
@@ -190,8 +186,6 @@ public class KitchenItemParent : NetworkBehaviour
         if (_tryAddIngredientToPlateOwner(plateOwner: parent1, ingredient: parent2.GetCurrentItemHeld().GetItemReference()))
         {
             parent2.DestroyCurrentItemHeld();
-
-            parent1.TriggerOnItemPickup();
             parent2.TriggerOnItemDrop();
             
             return true;
@@ -200,8 +194,6 @@ public class KitchenItemParent : NetworkBehaviour
         if (_tryAddIngredientToPlateOwner(plateOwner: parent2, ingredient: parent1.GetCurrentItemHeld().GetItemReference()))
         {
             parent1.DestroyCurrentItemHeld();
-
-            parent2.TriggerOnItemPickup();
             parent1.TriggerOnItemDrop();
 
             return true;
@@ -225,6 +217,8 @@ public class KitchenItemParent : NetworkBehaviour
         {
             if (plate.TryAddIngredientOnNetwork(ingredient))
             {
+                plateOwner.TriggerOnItemPickup();
+
                 return true;
             }
         }
