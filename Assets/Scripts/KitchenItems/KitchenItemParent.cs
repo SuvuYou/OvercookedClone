@@ -64,18 +64,22 @@ public class KitchenItemParent : NetworkBehaviour
         item.SetTargetToFollow(_itemSpawnPlaceholder);
     }
 
-    // TODO: Fix delay issues;
+    // TODO: Chech if delay issues are noticable;
     public void SetCurrentItemHeld(KitchenItem newItem) 
     {
         if (newItem != null)
         {
             _setCurrentItemHeldServerRpc(newItem.GetNetworkObjectReference());
+
+            return;
         }
-        else
+
+        if (_currentItemHeld != null)
         {
-            _resetCurrentItemHeldServerRpc();
             _triggerOnDropServerRpc();
         }
+
+        _resetCurrentItemHeldServerRpc();
     } 
 
     [ServerRpc(RequireOwnership = false)]
