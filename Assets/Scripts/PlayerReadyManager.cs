@@ -7,6 +7,8 @@ public class PlayerReadyManager : NetworkBehaviour
 {
     public static PlayerReadyManager Instance;
 
+    public event Action OnPlayerReady;
+
     private Dictionary<ulong, bool> _playersReadyStatus = new();
 
     private void Awake ()
@@ -21,20 +23,40 @@ public class PlayerReadyManager : NetworkBehaviour
         Instance = this;
     }
 
-    public void SetLocalPlayerReady()
+    public void ToggleLocalPlayerReady()
     {
-        _setLocalPlayerReadyServerRpc();
+        _toggleLocalPlayerReadyServerRpc();
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void _setLocalPlayerReadyServerRpc(ServerRpcParams rpcParams = default)
+    private void _toggleLocalPlayerReadyServerRpc(ServerRpcParams rpcParams = default)
     {
-        _playersReadyStatus[rpcParams.Receive.SenderClientId] = true;
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        bool prevStatus = IsPlayerReady(clientId);
+        _updatePlayersReadyStatusClientRpc(clientId, status: !prevStatus);
+        _triggerOnPlayerReadyEventClientRpc();
 
         if (_areAllPlayersReady())
         {
             SceneLoader.LoadSceneOnNetwork(Scene.Game);
         }
+    }
+
+    [ClientRpc]
+    private void _updatePlayersReadyStatusClientRpc(ulong clientId, bool status)
+    {
+        _playersReadyStatus[clientId] = status;
+    }
+
+    [ClientRpc]
+    private void _triggerOnPlayerReadyEventClientRpc()
+    {
+        OnPlayerReady?.Invoke();
+    }
+
+    public bool IsPlayerReady(ulong clientId)
+    {
+        return _playersReadyStatus.Keys.Contains(clientId) && _playersReadyStatus[clientId];
     }
 
     private bool _areAllPlayersReady()
