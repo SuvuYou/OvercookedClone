@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class PlayerController : KitchenItemParent
@@ -7,8 +8,10 @@ public class PlayerController : KitchenItemParent
 
     private float _raycastDistance = 1.2f;
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         if (IsOwner)
         {
             PlayerInput.Instance.OnInteract += () => _selectedCounter.SelectedCounter?.Interact(this);
@@ -17,6 +20,11 @@ public class PlayerController : KitchenItemParent
 
         OnItemDrop += () => SoundManager.SoundEvents.TriggerOnObjectDropSound(transform.position);
         OnItemPickup += () => SoundManager.SoundEvents.TriggerOnObjectPickupSound(transform.position);
+
+        if (IsServer)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += (ulong clientId) => this.DestroyCurrentItemHeld();
+        }
     }
 
     private void Update()

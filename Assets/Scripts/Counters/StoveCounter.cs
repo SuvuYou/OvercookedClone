@@ -16,11 +16,6 @@ public class StoveCounter : BaseCounter
 
     private NetworkVariable<State> _state = new();
     [SerializeField] private ProgressTrackerOnNetwork _fryingProgress;
-    
-    private void Awake ()
-    {
-        _fryingProgress.SetMaxProgressServerRpc(float.MaxValue);
-    }
 
     private void Update ()
     {

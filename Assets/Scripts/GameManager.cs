@@ -33,6 +33,7 @@ public class GameManager : NetworkBehaviour
     public bool IsPaused { get; private set; } = false;
     public bool IsLocalPaused { get; private set; } = false;
 
+    [SerializeField] private PlayerController _playerPrefab;
     [SerializeField] private List<KitchenItemSO> _allowedIngredients;
 
     private void Awake()
@@ -48,16 +49,41 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
         PlayerInput.Instance.OnPausePressed += _setLocalPlayerPause;
-        PlayerInput.Instance.OnInteractDuringWaitingState += _setLocalPlayerReady;
+        PlayerInput.Instance.OnInteractDuringWaitingState += _setLocalPlayerReady;  
+
+        
+
+        if (State != GameState.Waiting)
+        {
+            _setLocalPlayerReady();
+        }
+
+        if (IsServer)
+        {
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += _spawnPlayersOnLoad;
+
+            NetworkManager.Singleton.OnClientDisconnectCallback += (ulong disconnectedClientId) => {
+                _playersPauseStatus[disconnectedClientId] = false;
+                _setIsGamePausedClientRpc(_arePlayersPaused());
+            };
+        }
     }
 
-    public override void OnDestroy()
+    private void _spawnPlayersOnLoad(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        base.OnDestroy();
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+        {
+            PlayerController player = Instantiate(_playerPrefab);
+            player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, destroyWithScene: true);
+        }
 
+    }
+
+    public override void OnNetworkDespawn()
+    {
         PlayerInput.Instance.OnPausePressed -= _setLocalPlayerPause;
         PlayerInput.Instance.OnInteractDuringWaitingState -= _setLocalPlayerReady;
     }   
@@ -154,8 +180,16 @@ public class GameManager : NetworkBehaviour
 
         if (_areAllPlayersReady())
         {
-            _changeStateServerRpc(GameState.Countdown);
-            _triggerOnStartGameEventClientRpc();
+            if (State == GameState.Waiting)
+            {
+                _changeStateServerRpc(GameState.Countdown);
+                _triggerOnStartGameEventClientRpc();
+            }
+
+            if (State == GameState.Active)
+            {
+                _changeStateServerRpc(GameState.Active);
+            }
         }
     }
 

@@ -1,7 +1,9 @@
+using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PauseUIManager : MonoBehaviour
+public class PauseUIManager : NetworkBehaviour
 {
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _settingsButton;
@@ -25,6 +27,7 @@ public class PauseUIManager : MonoBehaviour
         });
         _mainMenuButton.onClick.AddListener(() => 
         {
+            NetworkManager.Singleton.Shutdown();
             GameManager.Instance.UnPauseGame(isDisconecting: true);
             SceneLoader.LoadScene(Scene.MainMenu);
         });
@@ -32,7 +35,7 @@ public class PauseUIManager : MonoBehaviour
         GameManager.Instance.OnLocalPlayerPause += _handleVisibility;
     }
 
-    private void OnDestroy ()
+    public override void OnDestroy ()
     {
         _resumeButton.onClick.RemoveAllListeners(); 
         _settingsButton.onClick.RemoveAllListeners(); 

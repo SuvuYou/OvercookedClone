@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine.SceneManagement;
 
 public enum Scene {
     MainMenu,
     Loading,
-    Game
+    Game,
+    LobbyScene,
+    PlayerSelectScene
 }
 
 public static class SceneLoader
@@ -14,7 +17,9 @@ public static class SceneLoader
     private static readonly Dictionary<Scene, string> SceneTypeToSceneName = new() {
         [Scene.MainMenu] = "MainMenuScene",
         [Scene.Loading] = "LoadingScene",
-        [Scene.Game] = "GameScene"
+        [Scene.Game] = "GameScene",
+        [Scene.LobbyScene] = "LobbyScene",
+        [Scene.PlayerSelectScene] = "PlayerSelectScene"
     };
 
     public static void LoadScene(Scene scene)
@@ -22,6 +27,11 @@ public static class SceneLoader
         SceneLoader.TargetScene = scene;
 
         SceneManager.LoadScene(SceneTypeToSceneName[Scene.Loading]);
+    }
+
+    public static void LoadSceneOnNetwork(Scene scene)
+    {
+        NetworkManager.Singleton.SceneManager.LoadScene(SceneTypeToSceneName[scene], loadSceneMode: LoadSceneMode.Single);
     }
 
     public static void LoadCallback()

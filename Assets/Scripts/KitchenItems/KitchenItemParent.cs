@@ -7,6 +7,7 @@ public class KitchenItemParent : NetworkBehaviour
 {
     [SerializeField] private Transform _itemSpawnPlaceholder;
 
+    // TODO: fix double sound effects
     public event Action OnItemPickup;
     public void TriggerOnItemPickup () 
     {
