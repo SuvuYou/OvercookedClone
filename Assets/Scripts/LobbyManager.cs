@@ -1,12 +1,15 @@
 using System;
-using System.Diagnostics;
 using Unity.Netcode;
+using UnityEngine;
 
 public class LobbyManager : NetworkBehaviour
 {
     public static LobbyManager Instance;
 
+    [SerializeField] private ColorPickersSO _colorPickers;
+
     public event Action OnConnectedPlayersCountChange;
+    public event Action<int, Color> OnPlayerColorChange;
 
     private NetworkList<LobbyPlayerData> _connectedPlayersData;
 
@@ -30,16 +33,15 @@ public class LobbyManager : NetworkBehaviour
         return _connectedPlayersData.Count;
     }
 
-    public bool IsPlayerIndexConnected(int index)
-    {
-        return _connectedPlayersData.Count > index;
-    }
-
     public ulong GetClientIdByIndex(int index)
     {
         return _connectedPlayersData[index].ClientId;
     }
 
+    public Color GetClientColorByIndex(int index)
+    {
+        return _connectedPlayersData[index].CharacterColor;
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -55,9 +57,56 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
+    public void SetPlayerColor(int playerIndex, Color newColor)
+    {
+        _triggerPlayerColorChangeServerRpc(playerIndex, newColor);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerPlayerColorChangeServerRpc(int playerIndex, Color newColor)
+    {
+        LobbyPlayerData player = _connectedPlayersData[playerIndex];
+        player.CharacterColor = newColor;
+        _connectedPlayersData[playerIndex] = player;
+
+        _triggerPlayerColorChangeClientRpc(playerIndex, newColor);
+    }
+
+    [ClientRpc]
+    private void _triggerPlayerColorChangeClientRpc(int playerIndex, Color newColor)
+    {
+        OnPlayerColorChange?.Invoke(playerIndex, newColor);
+    }
+
     private void _addLobbyPlayerData(ulong clientId)
     {
-        _connectedPlayersData.Add(new LobbyPlayerData(clientId));
+        _connectedPlayersData.Add(new LobbyPlayerData(clientId, color: _getFirstAvailibleColor()));
+    }
+
+    private Color _getFirstAvailibleColor()
+    {
+        foreach (Color color in _colorPickers.Colors)
+        {
+            if (IsColorAvailible(color))
+            {
+                return color;
+            }
+        }
+
+        return _colorPickers.Colors[0];
+    }
+
+    public bool IsColorAvailible(Color color)
+    {
+        foreach (LobbyPlayerData playerData in _connectedPlayersData)
+        {
+            if (playerData.CharacterColor.Equals(color))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void _removeLobbyPlayerData(ulong clientId)
@@ -77,10 +126,12 @@ public class LobbyManager : NetworkBehaviour
 struct LobbyPlayerData : IEquatable<LobbyPlayerData>, INetworkSerializable
 {
     public ulong ClientId;
+    public Color CharacterColor;
 
-    public LobbyPlayerData (ulong clientId)
+    public LobbyPlayerData (ulong clientId, Color color)
     {
         ClientId = clientId;
+        CharacterColor = color;
     }
 
     public bool Equals(LobbyPlayerData other)
@@ -91,5 +142,6 @@ struct LobbyPlayerData : IEquatable<LobbyPlayerData>, INetworkSerializable
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref ClientId);
+        serializer.SerializeValue(ref CharacterColor);
     }
 }

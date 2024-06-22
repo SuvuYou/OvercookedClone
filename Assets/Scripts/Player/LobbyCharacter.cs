@@ -1,18 +1,69 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class LobbyCharacter : MonoBehaviour
 {
     [SerializeField] private int _playerIndex;
     [SerializeField] private GameObject _playerReadyText;
+    [SerializeField] private LobbyCharacterVisual _visual;
+    [SerializeField] private ColorPickersSO _colorPickers;
 
     private void Start()
     {
-        _updateIsReadyText(isReady: false);
-
+        LobbyManager.Instance.OnPlayerColorChange += _syncVisualsColor;
         LobbyManager.Instance.OnConnectedPlayersCountChange += _updateVisibilityBasedOnConnectionStatus;
         PlayerReadyManager.Instance.OnPlayerReady += _updateIsReadyTextByClientId;
 
+        _updateIsReadyText(isReady: false);
         _updateVisibilityBasedOnConnectionStatus();
+
+        foreach(SingleColorPickerUI picker in _colorPickers.ColorPickersUI)
+        {
+            picker.OnColorSelect += (Color color) => _handleSelectColor(color);
+        }
+    }
+
+    private void _syncVisualsColor(int playerIndex, Color color)
+    {
+        if (_playerIndex != playerIndex)
+        {
+            return;
+        }
+
+        if (_isPLayerLocal())
+        {
+            return;
+        }
+
+        _visual.AssignColor(color);
+    }
+
+    private void _handleSelectColor(Color color)
+    {
+        if (!_isPLayerConnected())
+        {
+            return;
+        }
+
+        if (!_isPLayerLocal())
+        {
+            return;
+        }
+
+        if (!LobbyManager.Instance.IsColorAvailible(color))
+        {
+            return;
+        }
+
+        LobbyManager.Instance.SetPlayerColor(_playerIndex, color);
+        
+        SelectCharacterColor(color);
+    }
+
+    public void SelectCharacterColor(Color color)
+    {
+        _visual.AssignColor(color);
+        _colorPickers.SelectPickerByColor(color);
     }
 
     private void _updateVisibilityBasedOnConnectionStatus()
@@ -20,6 +71,16 @@ public class LobbyCharacter : MonoBehaviour
         if (_isPLayerConnected())
         {
             _show();
+            Color charColor = LobbyManager.Instance.GetClientColorByIndex(_playerIndex);
+
+            if (_isPLayerLocal())
+            {
+                SelectCharacterColor(charColor);
+            }
+            else
+            {
+                _visual.AssignColor(charColor);
+            }
         }
         else
         {
@@ -29,6 +90,10 @@ public class LobbyCharacter : MonoBehaviour
 
     private bool _isPLayerConnected() {
         return _playerIndex < LobbyManager.Instance.GetConnectedPlayersCount();
+    }
+
+    private bool _isPLayerLocal() {
+        return NetworkManager.Singleton.LocalClientId == LobbyManager.Instance.GetClientIdByIndex(_playerIndex);
     }
 
     private void _show()
@@ -43,7 +108,7 @@ public class LobbyCharacter : MonoBehaviour
 
     private void _updateIsReadyTextByClientId()
     {
-        if (!LobbyManager.Instance.IsPlayerIndexConnected(_playerIndex))
+        if (!_isPLayerConnected())
         {
             return;
         }
