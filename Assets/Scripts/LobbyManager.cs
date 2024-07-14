@@ -77,7 +77,6 @@ public class LobbyManager : NetworkBehaviour
         return _connectedPlayersData[index].CharacterColor;
     }
 
-
     public void SetPlayerColor(int playerIndex, Color newColor)
     {
         _triggerPlayerColorChangeServerRpc(playerIndex, newColor);
