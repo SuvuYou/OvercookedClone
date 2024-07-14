@@ -21,6 +21,11 @@ public class SingleColorPickerUI : MonoBehaviour
 
     public void IndicateAsSelected()
     {
+        if (_selectedIndicator == null)
+        {
+            return;
+        }
+
         _selectedIndicator.SetActive(true);
     }
 

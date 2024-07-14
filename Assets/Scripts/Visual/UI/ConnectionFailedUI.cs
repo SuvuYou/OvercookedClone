@@ -13,7 +13,7 @@ public class ConnectionFailedUI : MonoBehaviour
 
     private void Start()
     {
-        LobbyConnectionManager.Instance.OnFailedToJoin += () => _contentWindow.SetActive(true);
+        LobbyManager.Instance.OnFailedToJoin += () => _contentWindow.SetActive(true);
         _closeButton.onClick.AddListener(() => _contentWindow.SetActive(false));
     }
 }

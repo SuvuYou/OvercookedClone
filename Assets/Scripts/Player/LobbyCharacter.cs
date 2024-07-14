@@ -10,8 +10,8 @@ public class LobbyCharacter : MonoBehaviour
 
     private void Start()
     {
-        LobbyManager.Instance.OnPlayerColorChange += _syncVisualsColor;
         LobbyManager.Instance.OnConnectedPlayersCountChange += _updateVisibilityBasedOnConnectionStatus;
+        LobbyManager.Instance.OnPlayerColorChange += _syncVisualsColor;
         PlayerReadyManager.Instance.OnPlayerReady += _updateIsReadyTextByClientId;
 
         _updateIsReadyText(isReady: false);

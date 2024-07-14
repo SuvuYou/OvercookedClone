@@ -5,18 +5,17 @@ using UnityEngine;
 public class ColorPickersSO : ScriptableObject
 {
     [SerializeField] private List<Color> _colors;
+    public List<Color> GetColorsList() => _colors;
+
     [SerializeField] private SingleColorPickerUI _colorPickerPrefab;
 
-    public List<Color> Colors { get; private set; }
-    public List<SingleColorPickerUI> ColorPickersUI { get; private set; }
+    public List<SingleColorPickerUI> ColorPickersUI { get; private set; } = new();
     
-    public void InitPickers(Transform location)
+    public void InitPickers(Transform colorsParent)
     {
-        Colors = _colors;
-
         foreach(Color color in _colors)
         {
-            SingleColorPickerUI picker = Instantiate(_colorPickerPrefab, location);
+            SingleColorPickerUI picker = Instantiate(_colorPickerPrefab, colorsParent);
             picker.Init(color);
             ColorPickersUI.Add(picker);
         }

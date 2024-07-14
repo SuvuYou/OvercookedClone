@@ -8,7 +8,7 @@ public class HostOrJoinUI : MonoBehaviour
 
     private void Awake()
     {
-        _hostButton.onClick.AddListener(LobbyConnectionManager.Instance.StartHost);
-        _joinButton.onClick.AddListener(LobbyConnectionManager.Instance.StartClient);
+        _hostButton.onClick.AddListener(LobbyManager.Instance.StartHost);
+        _joinButton.onClick.AddListener(LobbyManager.Instance.StartClient);
     }
 }

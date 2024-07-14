@@ -6,6 +6,6 @@ public class ColorSelectorPanelUI : MonoBehaviour
 
     private void Awake()
     {
-        _colorPickers.InitPickers(transform);
+        _colorPickers.InitPickers(colorsParent: transform);
     }
 }

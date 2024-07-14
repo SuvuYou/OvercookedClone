@@ -11,7 +11,7 @@ public class ConnectingUI : MonoBehaviour
 
     private void Start()
     {
-        LobbyConnectionManager.Instance.OnTryingToJoin += () => _contentWindow.SetActive(true);
-        LobbyConnectionManager.Instance.OnFailedToJoin += () => _contentWindow.SetActive(false);
+        LobbyManager.Instance.OnTryingToJoin += () => _contentWindow.SetActive(true);
+        LobbyManager.Instance.OnFailedToJoin += () => _contentWindow.SetActive(false);
     }
 }

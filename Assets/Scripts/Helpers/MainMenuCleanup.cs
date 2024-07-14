@@ -9,5 +9,10 @@ public class MainMenuCleanup : MonoBehaviour
         {
             Destroy(NetworkManager.Singleton.gameObject);
         }
+
+        if (LobbyManager.Instance != null)
+        {
+            Destroy(LobbyManager.Instance.gameObject);
+        }
     }
 }

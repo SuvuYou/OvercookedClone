@@ -10,10 +10,12 @@ public class LobbyManager : NetworkBehaviour
 
     public event Action OnConnectedPlayersCountChange;
     public event Action<int, Color> OnPlayerColorChange;
+    public event Action OnTryingToJoin;
+    public event Action OnFailedToJoin;
 
     private NetworkList<LobbyPlayerData> _connectedPlayersData;
 
-    private void Awake ()
+    private void Awake()
     {
         if (Instance != null)
         {
@@ -22,10 +24,34 @@ public class LobbyManager : NetworkBehaviour
             return;
         }
 
-        _connectedPlayersData = new();
         Instance = this;
 
+        _connectedPlayersData = new();
         _connectedPlayersData.OnListChanged += (NetworkListEvent<LobbyPlayerData> eventArgs) => OnConnectedPlayersCountChange?.Invoke();
+
+        DontDestroyOnLoad(this.gameObject);
+    }
+
+    public void StartHost()
+    {
+        NetworkManager.Singleton.OnClientConnectedCallback += _addLobbyPlayerData;
+        NetworkManager.Singleton.OnClientDisconnectCallback += _removeLobbyPlayerData;
+
+        NetworkManager.Singleton.StartHost();
+        SceneLoader.LoadSceneOnNetwork(Scene.PlayerSelectScene);
+    }
+
+    public void StartClient()
+    {
+        OnTryingToJoin?.Invoke();
+
+        NetworkManager.Singleton.OnClientDisconnectCallback += _triggerOnFailedToJoin;
+        NetworkManager.Singleton.StartClient();
+    }
+
+    private void _triggerOnFailedToJoin(ulong clientId)
+    {
+        OnFailedToJoin?.Invoke();
     }
 
     public int GetConnectedPlayersCount()
@@ -38,24 +64,19 @@ public class LobbyManager : NetworkBehaviour
         return _connectedPlayersData[index].ClientId;
     }
 
+    public int GetIndexByClientId(ulong clientId)
+    {
+        for (int i = 0; i < _connectedPlayersData.Count; i++)
+            if (_connectedPlayersData[i].ClientId == clientId) return i;
+
+        return 0;    
+    }
+
     public Color GetClientColorByIndex(int index)
     {
         return _connectedPlayersData[index].CharacterColor;
     }
 
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-
-        if (IsServer)
-        {
-            // add host
-            _addLobbyPlayerData(clientId: 0);
-
-            NetworkManager.Singleton.OnClientConnectedCallback += _addLobbyPlayerData;
-            NetworkManager.Singleton.OnClientDisconnectCallback += _removeLobbyPlayerData;
-        }
-    }
 
     public void SetPlayerColor(int playerIndex, Color newColor)
     {
@@ -80,12 +101,13 @@ public class LobbyManager : NetworkBehaviour
 
     private void _addLobbyPlayerData(ulong clientId)
     {
-        _connectedPlayersData.Add(new LobbyPlayerData(clientId, color: _getFirstAvailibleColor()));
+        LobbyPlayerData data = new (clientId, color: _getFirstAvailibleColor());
+        _connectedPlayersData.Add(data);
     }
 
     private Color _getFirstAvailibleColor()
     {
-        foreach (Color color in _colorPickers.Colors)
+        foreach (Color color in _colorPickers.GetColorsList())
         {
             if (IsColorAvailible(color))
             {
@@ -93,7 +115,7 @@ public class LobbyManager : NetworkBehaviour
             }
         }
 
-        return _colorPickers.Colors[0];
+        return _colorPickers.GetColorsList()[0];
     }
 
     public bool IsColorAvailible(Color color)
@@ -120,6 +142,13 @@ public class LobbyManager : NetworkBehaviour
                 return;
             }
         }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        NetworkManager.Singleton.OnClientConnectedCallback -= _addLobbyPlayerData;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= _triggerOnFailedToJoin;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= _removeLobbyPlayerData;
     }
 }
 
