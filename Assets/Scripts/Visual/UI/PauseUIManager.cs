@@ -20,14 +20,16 @@ public class PauseUIManager : NetworkBehaviour
             _pausePanel.SetActive(false);
             GameManager.Instance.UnPauseGame();
         });
+
         _settingsButton.onClick.AddListener(() => 
         {
             _settingsUIManager.DisplaySettingsUI();
             _pausePanel.SetActive(false);
         });
+
         _mainMenuButton.onClick.AddListener(() => 
         {
-            NetworkManager.Singleton.Shutdown();
+            LobbyManager.Instance.ShutLobbyDown();
             GameManager.Instance.UnPauseGame(isDisconecting: true);
             SceneLoader.LoadScene(Scene.MainMenu);
         });

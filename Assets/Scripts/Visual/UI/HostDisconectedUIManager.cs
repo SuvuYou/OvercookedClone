@@ -6,6 +6,7 @@ public class HostDisconectedUIManager : MonoBehaviour
 {
     [SerializeField] private Button _mainMenuButton;
     [SerializeField] private GameObject _panel;
+    [SerializeField] private bool _isLobby = false;
 
     private void Start()
     {
@@ -13,21 +14,28 @@ public class HostDisconectedUIManager : MonoBehaviour
 
         _mainMenuButton.onClick.AddListener(() => 
         {
-            NetworkManager.Singleton.Shutdown();
-            GameManager.Instance.UnPauseGame(isDisconecting: true);
+            LobbyManager.Instance.ShutLobbyDown();
+            if (!_isLobby)
+            {
+                GameManager.Instance.UnPauseGame(isDisconecting: true);
+            }
             SceneLoader.LoadScene(Scene.MainMenu);
         });
 
-        NetworkManager.Singleton.OnClientDisconnectCallback += (ulong disconectedClientId) => {
-            if (disconectedClientId == NetworkManager.ServerClientId)
-            {
-                _panel.SetActive(true);
-            }
-        };
+        NetworkManager.Singleton.OnClientDisconnectCallback += _displayOnDisconnect;
+    }
+
+    private void _displayOnDisconnect (ulong disconectedClientId) 
+    {
+        if (disconectedClientId == NetworkManager.ServerClientId)
+        {
+            _panel.SetActive(true);
+        }
     }
 
     private void OnDestroy ()
     {
         _mainMenuButton.onClick.RemoveAllListeners(); 
+        NetworkManager.Singleton.OnClientDisconnectCallback -= _displayOnDisconnect;
     }
 }

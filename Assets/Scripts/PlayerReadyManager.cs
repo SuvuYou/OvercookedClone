@@ -23,9 +23,19 @@ public class PlayerReadyManager : NetworkBehaviour
         Instance = this;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        NetworkManager.Singleton.OnClientDisconnectCallback += _updatePlayersReadyStatusOnDisconnect;
+    }
+
     public void ToggleLocalPlayerReady()
     {
         _toggleLocalPlayerReadyServerRpc();
+    }
+
+    private void _updatePlayersReadyStatusOnDisconnect(ulong clientId)
+    {
+        _updatePlayersReadyStatusServerRpc(clientId, status: false);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -40,6 +50,12 @@ public class PlayerReadyManager : NetworkBehaviour
         {
             SceneLoader.LoadSceneOnNetwork(Scene.Game);
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _updatePlayersReadyStatusServerRpc(ulong clientId, bool status)
+    {
+       _updatePlayersReadyStatusClientRpc(clientId, status);
     }
 
     [ClientRpc]
@@ -70,5 +86,12 @@ public class PlayerReadyManager : NetworkBehaviour
         }
 
         return true;
+    }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        NetworkManager.Singleton.OnClientDisconnectCallback -= _updatePlayersReadyStatusOnDisconnect;
     }
 }

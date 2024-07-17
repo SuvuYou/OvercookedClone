@@ -143,11 +143,22 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
-    public override void OnNetworkDespawn()
+    public void ShutLobbyDown()
+    {
+        _disposeEvents();
+        NetworkManager.Singleton.Shutdown();
+    } 
+
+    private void _disposeEvents()
     {
         NetworkManager.Singleton.OnClientConnectedCallback -= _addLobbyPlayerData;
         NetworkManager.Singleton.OnClientDisconnectCallback -= _triggerOnFailedToJoin;
         NetworkManager.Singleton.OnClientDisconnectCallback -= _removeLobbyPlayerData;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        _disposeEvents();
     }
 }
 

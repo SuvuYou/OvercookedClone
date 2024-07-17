@@ -15,7 +15,7 @@ public class PlayerSelectCharacterUI : MonoBehaviour
 
     private void _loadMainScene()
     {
-        NetworkManager.Singleton.Shutdown(); 
+        LobbyManager.Instance.ShutLobbyDown();
         SceneLoader.LoadScene(Scene.MainMenu);
     }
 }

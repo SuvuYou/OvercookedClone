@@ -11,6 +11,7 @@ public class LobbyCharacter : MonoBehaviour
     private void Start()
     {
         LobbyManager.Instance.OnConnectedPlayersCountChange += _updateVisibilityBasedOnConnectionStatus;
+        LobbyManager.Instance.OnConnectedPlayersCountChange += _updateIsReadyTextByClientId;
         LobbyManager.Instance.OnPlayerColorChange += _syncVisualsColor;
         PlayerReadyManager.Instance.OnPlayerReady += _updateIsReadyTextByClientId;
 
@@ -122,4 +123,11 @@ public class LobbyCharacter : MonoBehaviour
         _playerReadyText.SetActive(isReady);
     }
 
+    private void OnDestroy()
+    {
+        LobbyManager.Instance.OnConnectedPlayersCountChange -= _updateVisibilityBasedOnConnectionStatus;
+        LobbyManager.Instance.OnConnectedPlayersCountChange -= _updateIsReadyTextByClientId;
+        LobbyManager.Instance.OnPlayerColorChange -= _syncVisualsColor;
+        PlayerReadyManager.Instance.OnPlayerReady -= _updateIsReadyTextByClientId;
+    }
 }

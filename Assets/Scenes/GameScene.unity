@@ -6191,6 +6191,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mainMenuButton: {fileID: 701045388}
   _panel: {fileID: 1133493966}
+  _isLobby: 0
 --- !u!4 &851502712 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5108163537557816741, guid: 562fb875c56f80a47986dbe924257449, type: 3}
