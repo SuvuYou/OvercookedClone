@@ -54,8 +54,6 @@ public class GameManager : NetworkBehaviour
         PlayerInput.Instance.OnPausePressed += _setLocalPlayerPause;
         PlayerInput.Instance.OnInteractDuringWaitingState += _setLocalPlayerReady;  
 
-        
-
         if (State != GameState.Waiting)
         {
             _setLocalPlayerReady();
@@ -64,6 +62,8 @@ public class GameManager : NetworkBehaviour
         if (IsServer)
         {
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += _spawnPlayersOnLoad;
+
+            NetworkManager.Singleton.OnClientConnectedCallback += _spawnPlayersOnLateJoin; 
 
             NetworkManager.Singleton.OnClientDisconnectCallback += (ulong disconnectedClientId) => {
                 _playersPauseStatus[disconnectedClientId] = false;
@@ -79,7 +79,12 @@ public class GameManager : NetworkBehaviour
             PlayerController player = Instantiate(_playerPrefab);
             player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, destroyWithScene: true);
         }
+    }
 
+    private void _spawnPlayersOnLateJoin(ulong clientId)
+    {
+        PlayerController player = Instantiate(_playerPrefab);
+        player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, destroyWithScene: true);
     }
 
     public override void OnNetworkDespawn()

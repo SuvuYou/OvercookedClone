@@ -6,7 +6,8 @@ public class WaitingForPlayersReadyUIManagery : MonoBehaviour
 
     private void Start()
     {
-        _waitingForPlayersPanel.SetActive(true);
+        bool isGameWaiting = GameManager.Instance.State == GameState.Waiting;
+        _waitingForPlayersPanel.SetActive(isGameWaiting ? true : false);
 
         GameManager.Instance.OnStartGame += _disableUI;
     }

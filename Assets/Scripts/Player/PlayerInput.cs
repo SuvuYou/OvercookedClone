@@ -104,33 +104,21 @@ public class PlayerInput : MonoBehaviour
 
     public string GetBindingKeyByAction(ActionBinding action)
     {
-        switch (action)
+        return action switch
         {
-            case ActionBinding.MoveUp:
-                return _inputSystem.Standard.Move.bindings[1].ToDisplayString();
-            case ActionBinding.MoveRight:
-                return _inputSystem.Standard.Move.bindings[2].ToDisplayString();
-            case ActionBinding.MoveDown:
-                return _inputSystem.Standard.Move.bindings[3].ToDisplayString();
-            case ActionBinding.MoveLeft:
-                return _inputSystem.Standard.Move.bindings[4].ToDisplayString();
-            case ActionBinding.MoveJoyStick:
-                return _inputSystem.Standard.Move.bindings[5].ToDisplayString();
-            case ActionBinding.Pause:
-                return _inputSystem.Standard.Pause.bindings[0].ToDisplayString();
-            case ActionBinding.PauseGamepad:
-                return _inputSystem.Standard.Pause.bindings[1].ToDisplayString();
-            case ActionBinding.Interact:
-                return _inputSystem.Standard.Interact.bindings[0].ToDisplayString();
-            case ActionBinding.InteractGamepad:
-                return _inputSystem.Standard.Interact.bindings[1].ToDisplayString();
-            case ActionBinding.InteractAlt:
-                return _inputSystem.Standard.InteractAlternative.bindings[0].ToDisplayString();
-            case ActionBinding.InteractAltGamepad:
-                return _inputSystem.Standard.InteractAlternative.bindings[1].ToDisplayString();
-            default:
-                return "ERR";
-        }
+            ActionBinding.MoveUp => _inputSystem.Standard.Move.bindings[1].ToDisplayString(),
+            ActionBinding.MoveRight => _inputSystem.Standard.Move.bindings[2].ToDisplayString(),
+            ActionBinding.MoveDown => _inputSystem.Standard.Move.bindings[3].ToDisplayString(),
+            ActionBinding.MoveLeft => _inputSystem.Standard.Move.bindings[4].ToDisplayString(),
+            ActionBinding.MoveJoyStick => _inputSystem.Standard.Move.bindings[5].ToDisplayString(),
+            ActionBinding.Pause => _inputSystem.Standard.Pause.bindings[0].ToDisplayString(),
+            ActionBinding.PauseGamepad => _inputSystem.Standard.Pause.bindings[1].ToDisplayString(),
+            ActionBinding.Interact => _inputSystem.Standard.Interact.bindings[0].ToDisplayString(),
+            ActionBinding.InteractGamepad => _inputSystem.Standard.Interact.bindings[1].ToDisplayString(),
+            ActionBinding.InteractAlt => _inputSystem.Standard.InteractAlternative.bindings[0].ToDisplayString(),
+            ActionBinding.InteractAltGamepad => _inputSystem.Standard.InteractAlternative.bindings[1].ToDisplayString(),
+            _ => "ERR"
+        };
     }
 
     public void RebindKey(ActionBinding actionToBind)
