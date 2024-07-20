@@ -14,5 +14,10 @@ public class MainMenuCleanup : MonoBehaviour
         {
             Destroy(LobbyManager.Instance.gameObject);
         }
+
+        if (LobbiesListManager.Instance != null)
+        {
+            Destroy(LobbiesListManager.Instance.gameObject);
+        }
     }
 }
