@@ -1,4 +1,3 @@
-using Unity.Netcode;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Lobbies;
@@ -10,6 +9,14 @@ using System.Threading.Tasks;
 public class LobbiesListManager : MonoBehaviour
 {
     public static LobbiesListManager Instance;
+
+    public event Action OnLobbyCreate;
+    public event Action OnLobbyCreated;
+
+    public event Action OnLobbyJoin;
+    public event Action OnLobbyJoined;
+
+    public event Action OnAsyncActionFailed;
 
     public Lobby CurrentLobby { get; private set; }
 
@@ -55,7 +62,9 @@ public class LobbiesListManager : MonoBehaviour
     {
         CreateLobbyOptions options = new() { IsPrivate = isPrivate };
 
+        OnLobbyCreate?.Invoke();
         Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, MAX_PLAYERS, options);
+        OnLobbyCreated?.Invoke();
 
         CurrentLobby = lobby;
 
@@ -71,7 +80,9 @@ public class LobbiesListManager : MonoBehaviour
     {
         JoinLobbyByCodeOptions options = new();
 
+        OnLobbyJoin?.Invoke();
         Lobby lobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode, options);
+        OnLobbyJoined?.Invoke();
 
         CurrentLobby = lobby;
     }
@@ -85,7 +96,9 @@ public class LobbiesListManager : MonoBehaviour
     {
         QuickJoinLobbyOptions options = new();
 
+        OnLobbyJoin?.Invoke();
         Lobby lobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
+        OnLobbyJoined?.Invoke();
 
         CurrentLobby = lobby;
 
@@ -100,6 +113,7 @@ public class LobbiesListManager : MonoBehaviour
         }
         catch (Exception e)
         {
+            OnAsyncActionFailed?.Invoke();
             Debug.Log(e);
         }
     }
