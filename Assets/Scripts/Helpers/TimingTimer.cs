@@ -31,12 +31,17 @@ public struct TimingTimer
         Timer -= timeAmount;
     }
 
-    public void ResetTimer()
+    public bool IsTimerUp()
     {
-        Timer = GetRandomTimeInRange();
+        return Timer <= 0f;
     }
 
-    public float GetRandomTimeInRange()
+    public void ResetTimer()
+    {
+        Timer = _getRandomTimeInRange();
+    }
+
+    private float _getRandomTimeInRange()
     {
         return ((float)_random.NextDouble() * (_maxDefaultTimerValue - _minDefaultTimerValue)) + _minDefaultTimerValue;
     }

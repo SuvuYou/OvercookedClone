@@ -61,7 +61,7 @@ public class DeliveryManager : NetworkBehaviour
         {
             _addingRecipeTimer.SubtractTime(Time.deltaTime);
 
-            if (_addingRecipeTimer.Timer <= 0 && _currentWaitingRecipeList.Count < MAX_RECIPE_WAITING_COUNT)
+            if (_addingRecipeTimer.IsTimerUp() && _currentWaitingRecipeList.Count < MAX_RECIPE_WAITING_COUNT)
             {
                 _addingRecipeTimer.ResetTimer();
 

@@ -1,10 +1,12 @@
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
 public class LobbyCharacter : MonoBehaviour
 {
     [SerializeField] private int _playerIndex;
-    [SerializeField] private GameObject _playerReadyText;
+    [SerializeField] private GameObject _playerReadyText;    
+    [SerializeField] private TMP_Text _playerNameText;
     [SerializeField] private LobbyCharacterVisual _visual;
     [SerializeField] private ColorPickersSO _colorPickers;
 
@@ -73,6 +75,8 @@ public class LobbyCharacter : MonoBehaviour
         {
             _show();
             Color charColor = LobbyManager.Instance.GetClientColorByIndex(_playerIndex);
+            string playerName = LobbyManager.Instance.GetPlayerName();
+            _setPlayerName(playerName);
 
             if (_isPLayerLocal())
             {
@@ -121,6 +125,11 @@ public class LobbyCharacter : MonoBehaviour
     private void _updateIsReadyText(bool isReady)
     {
         _playerReadyText.SetActive(isReady);
+    }
+
+    private void _setPlayerName(string playerName)
+    {
+        _playerNameText.text = playerName;
     }
 
     private void OnDestroy()

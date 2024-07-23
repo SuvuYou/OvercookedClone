@@ -1,4 +1,3 @@
-using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +14,7 @@ public class PlayerSelectCharacterUI : MonoBehaviour
 
     private void _loadMainScene()
     {
-        LobbyManager.Instance.ShutLobbyDown();
+        LobbyManager.Instance.ShutNetworkManagerDown();
         SceneLoader.LoadScene(Scene.MainMenu);
     }
 }

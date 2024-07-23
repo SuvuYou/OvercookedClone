@@ -5,6 +5,7 @@ using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 public class LobbiesListManager : MonoBehaviour
 {
@@ -18,7 +19,12 @@ public class LobbiesListManager : MonoBehaviour
 
     public event Action OnAsyncActionFailed;
 
+    public event Action<List<Lobby>> OnLobbiesQuery;
+
     public Lobby CurrentLobby { get; private set; }
+
+    private TimingTimer _lobbyHeartbeatTimer = new (defaultTimerValue: 10f); 
+    private TimingTimer _queryLobbiesTimer = new (defaultTimerValue: 5f); 
 
     private const int MAX_PLAYERS = 4;
 
@@ -33,7 +39,45 @@ public class LobbiesListManager : MonoBehaviour
 
         Instance = this;
 
+        DontDestroyOnLoad(this.gameObject);
         InitUnityServices();
+    }
+
+    private void Update()
+    {
+        _sendLobbyHeartBeat();
+        _intervalQueryLobbies();
+    }
+
+    private void _sendLobbyHeartBeat()
+    {
+        if (CurrentLobby == null || !_isLobbyHost()) return;
+
+        _lobbyHeartbeatTimer.SubtractTime(Time.deltaTime);
+
+        if (_lobbyHeartbeatTimer.IsTimerUp())
+        {
+            LobbyService.Instance.SendHeartbeatPingAsync(CurrentLobby.Id);
+            _lobbyHeartbeatTimer.ResetTimer();
+        }
+    }
+
+    private void _intervalQueryLobbies()
+    {
+        if (CurrentLobby != null) return;
+
+        _queryLobbiesTimer.SubtractTime(Time.deltaTime);
+
+        if (_queryLobbiesTimer.IsTimerUp())
+        {
+            _safeQueryLobbies();
+            _queryLobbiesTimer.ResetTimer();
+        }
+    }
+
+    private bool _isLobbyHost()
+    {
+        return CurrentLobby.HostId == AuthenticationService.Instance.PlayerId;
     }
 
     public void InitUnityServices()
@@ -87,6 +131,22 @@ public class LobbiesListManager : MonoBehaviour
         CurrentLobby = lobby;
     }
 
+    public void JoinLobbyById(string lobbyId)
+    {
+        TryCatchWrapper(() => _joinLobbyById(lobbyId));
+    }
+
+    private async Task _joinLobbyById(string lobbyId)
+    {
+        JoinLobbyByIdOptions options = new();
+
+        OnLobbyJoin?.Invoke();
+        Lobby lobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobbyId, options);
+        OnLobbyJoined?.Invoke();
+
+        CurrentLobby = lobby;
+    }
+
     public void QuickJoinLobby()
     {
         TryCatchWrapper(() => _quickJoinLobby());
@@ -104,6 +164,42 @@ public class LobbiesListManager : MonoBehaviour
 
         LobbyManager.Instance.StartClient();
     }
+
+    public void LeaveLobby()
+    {
+        TryCatchWrapper(() => _leaveLobby());
+    }
+
+    private async Task _leaveLobby()
+    {
+        if (CurrentLobby != null)
+        {
+            await LobbyService.Instance.RemovePlayerAsync(CurrentLobby.Id, AuthenticationService.Instance.PlayerId);
+
+            CurrentLobby = null;
+        }
+    }
+
+    public void _safeQueryLobbies()
+    {
+        TryCatchWrapper(() => _queryLobbies());
+    }
+
+    private async Task _queryLobbies()
+    {
+        QueryLobbiesOptions options = new () 
+        {
+            Filters = new List<QueryFilter> 
+            {
+                new (field: QueryFilter.FieldOptions.AvailableSlots, op: QueryFilter.OpOptions.GT, value: "0")
+            }
+        };
+
+        QueryResponse response = await LobbyService.Instance.QueryLobbiesAsync(options);
+
+        OnLobbiesQuery?.Invoke(response.Results);
+    }
+
 
     private async void TryCatchWrapper(Func<Task> func)
     {

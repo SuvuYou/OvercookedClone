@@ -105,7 +105,7 @@ public class GameManager : NetworkBehaviour
                 _countdownTimer.SubtractTime(Time.deltaTime);
                 _triggerOnCountdownEventClientRpc(_countdownTimer.Timer);
 
-                if (_countdownTimer.Timer <= 0f)
+                if (_countdownTimer.IsTimerUp())
                 {
                     _changeStateServerRpc(GameState.Active);
                     _countdownTimer.ResetTimer();

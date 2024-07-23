@@ -25,7 +25,7 @@ public class CookingProgressBarUI : ProgressBarUI
 
             _soundEffectTimer.SubtractTime(Time.deltaTime);
 
-            if (_soundEffectTimer.Timer <= 0f)
+            if (_soundEffectTimer.IsTimerUp())
             {
                 SoundManager.SoundEvents.TriggerOnWarningSound(_stove.transform.position);
                 _soundEffectTimer.ResetTimer();

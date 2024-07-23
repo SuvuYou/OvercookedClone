@@ -29,7 +29,7 @@ public class PauseUIManager : NetworkBehaviour
 
         _mainMenuButton.onClick.AddListener(() => 
         {
-            LobbyManager.Instance.ShutLobbyDown();
+            LobbyManager.Instance.ShutNetworkManagerDown();
             GameManager.Instance.UnPauseGame(isDisconecting: true);
             SceneLoader.LoadScene(Scene.MainMenu);
         });

@@ -32,7 +32,7 @@ public class PlateCounter : BaseCounter
         {
             _plateSpawnTimer.SubtractTime(Time.deltaTime);
 
-            if (_plateSpawnTimer.Timer <= 0)
+            if (_plateSpawnTimer.IsTimerUp())
             {
                 _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value + 1);
                 _plateSpawnTimer.ResetTimer();

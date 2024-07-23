@@ -14,7 +14,7 @@ public class HostDisconectedUIManager : MonoBehaviour
 
         _mainMenuButton.onClick.AddListener(() => 
         {
-            LobbyManager.Instance.ShutLobbyDown();
+            LobbyManager.Instance.ShutNetworkManagerDown();
             if (!_isLobby)
             {
                 GameManager.Instance.UnPauseGame(isDisconecting: true);

@@ -1,10 +1,14 @@
 using System;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
 public class LobbyManager : NetworkBehaviour
 {
     public static LobbyManager Instance;
+
+    private const string PLAYER_NAME_PLAYER_PREF = "PlayerNameMultiplayer";
+    private string _playerName;
 
     [SerializeField] private ColorPickersSO _colorPickers;
 
@@ -24,6 +28,8 @@ public class LobbyManager : NetworkBehaviour
             return;
         }
 
+        _playerName = PlayerPrefs.GetString(PLAYER_NAME_PLAYER_PREF, "Player Name");
+
         Instance = this;
 
         _connectedPlayersData = new();
@@ -32,9 +38,17 @@ public class LobbyManager : NetworkBehaviour
         DontDestroyOnLoad(this.gameObject);
     }
 
+    public string GetPlayerName () => _playerName;
+    public void SetPlayerName (string name)
+    {   
+        _playerName = name;
+        PlayerPrefs.SetString(PLAYER_NAME_PLAYER_PREF, name);
+    } 
+    
     public void StartHost()
     {
         NetworkManager.Singleton.OnClientConnectedCallback += _addLobbyPlayerData;
+        NetworkManager.Singleton.OnClientConnectedCallback += _setPlayerNameServerRpc;
         NetworkManager.Singleton.OnClientDisconnectCallback += _removeLobbyPlayerData;
 
         NetworkManager.Singleton.StartHost();
@@ -85,11 +99,27 @@ public class LobbyManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void _triggerPlayerColorChangeServerRpc(int playerIndex, Color newColor)
     {
-        LobbyPlayerData player = _connectedPlayersData[playerIndex];
-        player.CharacterColor = newColor;
-        _connectedPlayersData[playerIndex] = player;
+        LobbyPlayerData data = _connectedPlayersData[playerIndex];
+        data.CharacterColor = newColor;
+        _connectedPlayersData[playerIndex] = data;
 
         _triggerPlayerColorChangeClientRpc(playerIndex, newColor);
+    }
+
+    [ServerRpc]
+    private void _setPlayerNameServerRpc(ulong clientId)
+    {
+        _setPlayerNameClientRpc();
+    }
+
+    [ClientRpc]
+    private void _setPlayerNameClientRpc()
+    {
+        int index = GetIndexByClientId(OwnerClientId);
+
+        LobbyPlayerData data = _connectedPlayersData[index];
+        data.PlayerName = GetPlayerName();
+        _connectedPlayersData[index] = data;
     }
 
     [ClientRpc]
@@ -100,7 +130,7 @@ public class LobbyManager : NetworkBehaviour
 
     private void _addLobbyPlayerData(ulong clientId)
     {
-        LobbyPlayerData data = new (clientId, color: _getFirstAvailibleColor());
+        LobbyPlayerData data = new (clientId, color: _getFirstAvailibleColor(), playerName: "");
         _connectedPlayersData.Add(data);
     }
 
@@ -143,9 +173,10 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
-    public void ShutLobbyDown()
+    public void ShutNetworkManagerDown()
     {
         _disposeEvents();
+        LobbiesListManager.Instance.LeaveLobby();
         NetworkManager.Singleton.Shutdown();
     } 
 
@@ -165,12 +196,14 @@ public class LobbyManager : NetworkBehaviour
 struct LobbyPlayerData : IEquatable<LobbyPlayerData>, INetworkSerializable
 {
     public ulong ClientId;
+    public FixedString64Bytes PlayerName;
     public Color CharacterColor;
 
-    public LobbyPlayerData (ulong clientId, Color color)
+    public LobbyPlayerData (ulong clientId, Color color, string playerName)
     {
         ClientId = clientId;
         CharacterColor = color;
+        PlayerName = playerName;
     }
 
     public bool Equals(LobbyPlayerData other)
@@ -182,5 +215,6 @@ struct LobbyPlayerData : IEquatable<LobbyPlayerData>, INetworkSerializable
     {
         serializer.SerializeValue(ref ClientId);
         serializer.SerializeValue(ref CharacterColor);
+        serializer.SerializeValue(ref PlayerName);
     }
 }
