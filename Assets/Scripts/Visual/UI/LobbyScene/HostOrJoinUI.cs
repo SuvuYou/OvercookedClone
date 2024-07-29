@@ -21,8 +21,8 @@ public class HostOrJoinUI : MonoBehaviour
 
         _hideCreateLobby();
 
-        _playerNameInputField.text = LobbyManager.Instance.GetPlayerName();
-        _playerNameInputField.onValueChanged.AddListener((string value) => LobbyManager.Instance.SetPlayerName(value));
+        _playerNameInputField.text = LobbyDataManager.Instance.GetLocalPlayerName();
+        _playerNameInputField.onValueChanged.AddListener((string value) => LobbyDataManager.Instance.SetPlayerName(value));
     }
 
     private void _showCreateLobby() => _createLobbyWindow.SetActive(true);

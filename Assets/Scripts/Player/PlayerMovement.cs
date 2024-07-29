@@ -21,7 +21,7 @@ public class PlayerMovement : NetworkBehaviour
             enabled = false;
         }
 
-        transform.position = _spawnPositions[LobbyManager.Instance.GetIndexByClientId(OwnerClientId)];
+        transform.position = _spawnPositions[LobbyDataManager.Instance.GetIndexByClientId(OwnerClientId)];
     }
 
     private void Update()

@@ -7,12 +7,13 @@ public class NetworkCharacterVisual : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        LobbyManager.Instance.OnConnectedPlayersCountChange += _updateColor;
+        LobbyDataManager.Instance.OnConnectedPlayersDataChange += _updateColor;
         _updateColor();
     }
 
     private void _updateColor ()
     {
-        _visual.AssignColor(LobbyManager.Instance.GetClientColorByIndex(LobbyManager.Instance.GetIndexByClientId(OwnerClientId)));
+        int index = LobbyDataManager.Instance.GetIndexByClientId(OwnerClientId);
+        _visual.AssignColor(LobbyDataManager.Instance.GetPlayerDataByIndex(index).CharacterColor);
     }
 }

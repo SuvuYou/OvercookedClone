@@ -1,15 +1,23 @@
 using Unity.Services.Authentication;
 using Unity.Services.Core;
+using Unity.Services.Relay;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Unity.Services.Relay.Models;
+using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport.Relay;
 
 public class LobbiesListManager : MonoBehaviour
 {
     public static LobbiesListManager Instance;
+
+    public const int MAX_PLAYERS = 4;
+    public const string RELAY_CODE_LOBBY_KEY = "RelayCode";
 
     public event Action OnLobbyCreate;
     public event Action OnLobbyCreated;
@@ -24,9 +32,7 @@ public class LobbiesListManager : MonoBehaviour
     public Lobby CurrentLobby { get; private set; }
 
     private TimingTimer _lobbyHeartbeatTimer = new (defaultTimerValue: 10f); 
-    private TimingTimer _queryLobbiesTimer = new (defaultTimerValue: 5f); 
-
-    private const int MAX_PLAYERS = 4;
+    private TimingTimer _queryLobbiesTimer = new (defaultTimerValue: 3f); 
 
     private void Awake()
     {
@@ -39,8 +45,8 @@ public class LobbiesListManager : MonoBehaviour
 
         Instance = this;
 
-        DontDestroyOnLoad(this.gameObject);
         InitUnityServices();
+        DontDestroyOnLoad(this.gameObject);
     }
 
     private void Update()
@@ -90,11 +96,38 @@ public class LobbiesListManager : MonoBehaviour
         if (UnityServices.State != ServicesInitializationState.Initialized)
         {
             InitializationOptions options = new();
-            options.SetProfile(UnityEngine.Random.Range(0, 100).ToString());
+            options.SetProfile(UnityEngine.Random.Range(0, 10000).ToString());
 
-            await UnityServices.InitializeAsync();
+            await UnityServices.InitializeAsync(options);
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
         }
+    }
+
+    private async Task<string> _allocateRelay()
+    {
+        Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections: MAX_PLAYERS - 1);
+
+        string code = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+        _setUnityRelayTransport(allocation);
+
+        return code;
+    }
+
+    private async Task _joinAllocatedRelay(string code)
+    {
+        JoinAllocation allocation = await RelayService.Instance.JoinAllocationAsync(code);
+        _setUnityRelayTransport(allocation);
+    }
+
+    private void _setUnityRelayTransport(Allocation allocation)
+    {
+        NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, "dtls"));
+    }
+
+    private void _setUnityRelayTransport(JoinAllocation allocation)
+    {
+        NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, "dtls"));
     }
 
     public void CreateLobby(string lobbyName, bool isPrivate)
@@ -102,17 +135,50 @@ public class LobbiesListManager : MonoBehaviour
         TryCatchWrapper(() => _createLobby(lobbyName, isPrivate));
     }
 
+    private async Task _setLobbyRelayCode(string lobbyId, string joinCode)
+    {
+        UpdateLobbyOptions updateOptions = new () 
+        {
+            Data = new Dictionary<string, DataObject>() 
+            {
+                { RELAY_CODE_LOBBY_KEY, new DataObject(visibility: DataObject.VisibilityOptions.Public, value: joinCode) }
+            }
+        };
+
+        await LobbyService.Instance.UpdateLobbyAsync(lobbyId, updateOptions);
+    }
+
     private async Task _createLobby(string lobbyName, bool isPrivate)
     {
         CreateLobbyOptions options = new() { IsPrivate = isPrivate };
 
         OnLobbyCreate?.Invoke();
-        Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, MAX_PLAYERS, options);
-        OnLobbyCreated?.Invoke();
 
+        Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, MAX_PLAYERS, options);
+
+        string joinCode = await _allocateRelay();
+
+        await _setLobbyRelayCode(lobbyId: lobby.Id, joinCode: joinCode);
+
+        OnLobbyCreated?.Invoke();
         CurrentLobby = lobby;
 
         LobbyManager.Instance.StartHost();
+    }
+
+    private async Task _joinLobbyWrapper(Func<Task<Lobby>> joinLobbyFunction)
+    {
+        OnLobbyJoin?.Invoke();
+
+        Lobby lobby = await joinLobbyFunction();
+
+        await _joinAllocatedRelay(code: lobby.Data[RELAY_CODE_LOBBY_KEY].Value);
+        
+        OnLobbyJoined?.Invoke();
+
+        CurrentLobby = lobby;
+
+        LobbyManager.Instance.StartClient();
     }
 
     public void JoinLobbyByCode(string lobbyCode)
@@ -124,11 +190,7 @@ public class LobbiesListManager : MonoBehaviour
     {
         JoinLobbyByCodeOptions options = new();
 
-        OnLobbyJoin?.Invoke();
-        Lobby lobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode, options);
-        OnLobbyJoined?.Invoke();
-
-        CurrentLobby = lobby;
+        await _joinLobbyWrapper(() => LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode, options));
     }
 
     public void JoinLobbyById(string lobbyId)
@@ -140,11 +202,7 @@ public class LobbiesListManager : MonoBehaviour
     {
         JoinLobbyByIdOptions options = new();
 
-        OnLobbyJoin?.Invoke();
-        Lobby lobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobbyId, options);
-        OnLobbyJoined?.Invoke();
-
-        CurrentLobby = lobby;
+        await _joinLobbyWrapper(() => LobbyService.Instance.JoinLobbyByIdAsync(lobbyId, options));
     }
 
     public void QuickJoinLobby()
@@ -156,13 +214,7 @@ public class LobbiesListManager : MonoBehaviour
     {
         QuickJoinLobbyOptions options = new();
 
-        OnLobbyJoin?.Invoke();
-        Lobby lobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
-        OnLobbyJoined?.Invoke();
-
-        CurrentLobby = lobby;
-
-        LobbyManager.Instance.StartClient();
+        await _joinLobbyWrapper(() => LobbyService.Instance.QuickJoinLobbyAsync(options));
     }
 
     public void LeaveLobby()

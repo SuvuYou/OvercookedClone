@@ -36,6 +36,11 @@ public class PlayerReadyManager : NetworkBehaviour
     private void _updatePlayersReadyStatusOnDisconnect(ulong clientId)
     {
         _updatePlayersReadyStatusServerRpc(clientId, status: false);
+
+        if (_areAllPlayersReady())
+        {
+            SceneLoader.LoadSceneOnNetwork(Scene.Game);
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]

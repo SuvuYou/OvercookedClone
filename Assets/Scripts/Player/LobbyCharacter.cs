@@ -12,12 +12,11 @@ public class LobbyCharacter : MonoBehaviour
 
     private void Start()
     {
-        LobbyManager.Instance.OnConnectedPlayersCountChange += _updateVisibilityBasedOnConnectionStatus;
-        LobbyManager.Instance.OnConnectedPlayersCountChange += _updateIsReadyTextByClientId;
-        LobbyManager.Instance.OnPlayerColorChange += _syncVisualsColor;
-        PlayerReadyManager.Instance.OnPlayerReady += _updateIsReadyTextByClientId;
+        LobbyDataManager.Instance.OnConnectedPlayersDataChange += _updateVisibilityBasedOnConnectionStatus;
+        LobbyDataManager.Instance.OnPlayerColorChange += _syncVisualsColor;
+        PlayerReadyManager.Instance.OnPlayerReady += _updateIsReadyText;
 
-        _updateIsReadyText(isReady: false);
+        _setIsReadyTextVisibility(isReady: false);
         _updateVisibilityBasedOnConnectionStatus();
 
         foreach(SingleColorPickerUI picker in _colorPickers.ColorPickersUI)
@@ -28,12 +27,7 @@ public class LobbyCharacter : MonoBehaviour
 
     private void _syncVisualsColor(int playerIndex, Color color)
     {
-        if (_playerIndex != playerIndex)
-        {
-            return;
-        }
-
-        if (_isPLayerLocal())
+        if (_playerIndex != playerIndex || _isPLayerLocal())
         {
             return;
         }
@@ -43,28 +37,17 @@ public class LobbyCharacter : MonoBehaviour
 
     private void _handleSelectColor(Color color)
     {
-        if (!_isPLayerConnected())
+        if (
+            !_isPLayerConnected() || 
+            !_isPLayerLocal() ||
+            !LobbyDataManager.Instance.IsColorAvailible(color)
+            )
         {
             return;
         }
 
-        if (!_isPLayerLocal())
-        {
-            return;
-        }
-
-        if (!LobbyManager.Instance.IsColorAvailible(color))
-        {
-            return;
-        }
-
-        LobbyManager.Instance.SetPlayerColor(_playerIndex, color);
+        LobbyDataManager.Instance.SetPlayerColor(_playerIndex, color);
         
-        SelectCharacterColor(color);
-    }
-
-    public void SelectCharacterColor(Color color)
-    {
         _visual.AssignColor(color);
         _colorPickers.SelectPickerByColor(color);
     }
@@ -74,18 +57,8 @@ public class LobbyCharacter : MonoBehaviour
         if (_isPLayerConnected())
         {
             _show();
-            Color charColor = LobbyManager.Instance.GetClientColorByIndex(_playerIndex);
-            string playerName = LobbyManager.Instance.GetPlayerName();
-            _setPlayerName(playerName);
-
-            if (_isPLayerLocal())
-            {
-                SelectCharacterColor(charColor);
-            }
-            else
-            {
-                _visual.AssignColor(charColor);
-            }
+            _updateCharacterVisual();
+            _updateIsReadyText();
         }
         else
         {
@@ -93,12 +66,26 @@ public class LobbyCharacter : MonoBehaviour
         }
     }
 
+    private void _updateCharacterVisual()
+    {
+        LobbyPlayerData playerData = LobbyDataManager.Instance.GetPlayerDataByIndex(_playerIndex);
+
+        _setPlayerName(playerData.GetPlayerName());
+
+        _visual.AssignColor(playerData.CharacterColor);
+
+        if (_isPLayerLocal())
+        {
+            _colorPickers.SelectPickerByColor(playerData.CharacterColor);
+        }
+    }
+
     private bool _isPLayerConnected() {
-        return _playerIndex < LobbyManager.Instance.GetConnectedPlayersCount();
+        return _playerIndex < LobbyDataManager.Instance.GetConnectedPlayersCount();
     }
 
     private bool _isPLayerLocal() {
-        return NetworkManager.Singleton.LocalClientId == LobbyManager.Instance.GetClientIdByIndex(_playerIndex);
+        return NetworkManager.Singleton.LocalClientId == LobbyDataManager.Instance.GetPlayerDataByIndex(_playerIndex).ClientId;
     }
 
     private void _show()
@@ -111,32 +98,24 @@ public class LobbyCharacter : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void _updateIsReadyTextByClientId()
+    private void _updateIsReadyText()
     {
         if (!_isPLayerConnected())
         {
             return;
         }
 
-        ulong clientId = LobbyManager.Instance.GetClientIdByIndex(_playerIndex);
-        _updateIsReadyText(isReady: PlayerReadyManager.Instance.IsPlayerReady(clientId));
+        ulong clientId = LobbyDataManager.Instance.GetPlayerDataByIndex(_playerIndex).ClientId;
+        _setIsReadyTextVisibility(isReady: PlayerReadyManager.Instance.IsPlayerReady(clientId));
     }
 
-    private void _updateIsReadyText(bool isReady)
-    {
-        _playerReadyText.SetActive(isReady);
-    }
-
-    private void _setPlayerName(string playerName)
-    {
-        _playerNameText.text = playerName;
-    }
-
+    private void _setIsReadyTextVisibility(bool isReady) => _playerReadyText.SetActive(isReady);
+    private void _setPlayerName(string playerName) => _playerNameText.text = playerName;
+    
     private void OnDestroy()
     {
-        LobbyManager.Instance.OnConnectedPlayersCountChange -= _updateVisibilityBasedOnConnectionStatus;
-        LobbyManager.Instance.OnConnectedPlayersCountChange -= _updateIsReadyTextByClientId;
-        LobbyManager.Instance.OnPlayerColorChange -= _syncVisualsColor;
-        PlayerReadyManager.Instance.OnPlayerReady -= _updateIsReadyTextByClientId;
+        LobbyDataManager.Instance.OnConnectedPlayersDataChange -= _updateVisibilityBasedOnConnectionStatus;
+        LobbyDataManager.Instance.OnPlayerColorChange -= _syncVisualsColor;
+        PlayerReadyManager.Instance.OnPlayerReady -= _updateIsReadyText;
     }
 }
