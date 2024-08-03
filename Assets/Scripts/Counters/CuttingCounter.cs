@@ -8,52 +8,96 @@ public class CuttingCounter : BaseCounter
 
     public event Action OnCut;
 
+    private bool _isCutWithoutSwapping;
+    private KitchenItemSO _cachedSlicedItem;
+
     public override void Interact(KitchenItemParent player)
-    {
+    {        
         if (KitchenItemParent.TryAddIngredientToPlateOwner(player, this))
         {
-            _cuttingProgress.SetProgressServerRpc(0);
+            _cuttingProgress.SetProgress(0);
+
+            return;
         }
 
         if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsSliceable())
         {
-            _cuttingProgress.SetProgressServerRpc(0);
-            _cuttingProgress.SetMaxProgressServerRpc(player.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount);
-            KitchenItemParent.SwapItemsOfTwoOwners(player, this);
+            int maxProgress = player.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount;
+            
+            if (_trySafeSwapItems(player))
+            {
+                _cuttingProgress.SetProgress(0);
+                _cuttingProgress.SetMaxProgress(maxProgress);
+            
+                return;
+            }   
         }
-        else if (!player.IsHoldingItem())
+        
+        if (!player.IsHoldingItem())
         {
-            _cuttingProgress.SetProgressServerRpc(0);
-            KitchenItemParent.SwapItemsOfTwoOwners(player, this);
+            if (_trySafeSwapItems(player))
+            {
+                _cuttingProgress.SetProgress(0);
+
+                return;
+            }   
         }
     }
 
     public override void InteractAlternative(KitchenItemParent player)
     {
-        if (this.IsHoldingItem() && this.GetCurrentItemHeld().GetItemReference().IsSliceable())
+        if (this.IsHoldingItem() && this.GetCurrentItemHeld().GetItemReference().IsSliceable() && !_isCutWithoutSwapping)
         {
             float newCuttingProgress = _cuttingProgress.Progress + 1;
-            _cuttingProgress.SetProgressServerRpc(newCuttingProgress);
-            _triggerOnCutEventsServerRpc();
+            _cuttingProgress.SetProgress(newCuttingProgress);
+            _triggerCut();
 
             if (this.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount == newCuttingProgress)
             {
-                KitchenItemSO slicedItem = this.GetCurrentItemHeld().GetItemReference().SliceableSO.SlicedPrefab.GetItemReference();
+                _cachedSlicedItem = this.GetCurrentItemHeld().GetItemReference().SliceableSO.SlicedPrefab.GetItemReference();
+                _isCutWithoutSwapping = true;
+
                 this.DestroyCurrentItemHeld();
 
-                this.SpawnKitchenItem(slicedItem);
+                this.SpawnKitchenItem(_cachedSlicedItem);
             }
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void _triggerOnCutEventsServerRpc()
+    private bool _trySafeSwapItems(KitchenItemParent other)
     {
-        _triggerOnCutEventsClientRpc();
+        if (GetCurrentItemHeld() != null && GetCurrentItemHeld().GetItemReference() != _cachedSlicedItem && _isCutWithoutSwapping)
+        {
+            return false;  
+        }
+
+        _isCutWithoutSwapping = false;
+        KitchenItemParent.SwapItemsOfTwoOwners(other, this);
+
+        return true;  
+    }
+
+    private void _triggerCut()
+    {
+        _triggerCutLocally();
+        _triggerOnCutEventsServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerOnCutEventsServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _triggerOnCutEventsClientRpc(sender: rpcParams.Receive.SenderClientId);
     }
 
     [ClientRpc]
-    private void _triggerOnCutEventsClientRpc()
+    private void _triggerOnCutEventsClientRpc(ulong sender)
+    {
+        if (NetworkManager.Singleton.LocalClientId == sender) return;
+        
+        _triggerCutLocally();
+    }
+
+    private void _triggerCutLocally()
     {
         OnCut?.Invoke();
         SoundManager.SoundEvents.TriggerOnCutSound(transform.position);

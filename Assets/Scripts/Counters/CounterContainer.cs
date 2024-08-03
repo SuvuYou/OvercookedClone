@@ -12,27 +12,35 @@ public class CounterContainer : BaseCounter
         if (!player.IsHoldingItem())
         {
             player.SpawnKitchenItem(_kitchenItemToSpawn);
-            _triggerEventOnNetworkServerRpc();
+            _triggerEventsLocallyAndOnNetwork();
         }
 
         if (player.IsHoldingItem()) 
         {
             if (KitchenItemParent.TryAddIngredientToPlateOwner(player, _kitchenItemToSpawn))
             {
-                _triggerEventOnNetworkServerRpc();
+                _triggerEventsLocallyAndOnNetwork();
             }
         };
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void _triggerEventOnNetworkServerRpc()
+    private void _triggerEventsLocallyAndOnNetwork()
     {
-        _triggerEventOnNetworkClientRpc();
+        OnContainerOpen?.Invoke();
+        _triggerEventOnNetworkServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerEventOnNetworkServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _triggerEventOnNetworkClientRpc(sender: rpcParams.Receive.SenderClientId);
     }
 
     [ClientRpc]
-    private void _triggerEventOnNetworkClientRpc()
+    private void _triggerEventOnNetworkClientRpc(ulong sender)
     {
+        if (NetworkManager.Singleton.LocalClientId == sender) return;
+
         OnContainerOpen?.Invoke();
     }
 }

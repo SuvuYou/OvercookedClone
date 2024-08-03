@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: TomatoSlicesSO
   m_EditorClassIdentifier: 
   Prefab: {fileID: 5292735856210151442, guid: b4610b3aab469d548af5ff42c4903283, type: 3}
+  VisualFakeItem: {fileID: 3571241687667697856, guid: a61567e045b797b4d84e0fb659920913, type: 3}
   IconSprite: {fileID: 21300000, guid: c9f08c3c1ae2a364aaeaa3712540b1d4, type: 3}
   ItemName: TomatoSlices
   SliceableSO: {fileID: 0}

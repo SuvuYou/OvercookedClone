@@ -3111,7 +3111,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0ea67ae5b0df544caa20753a9cfff4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _colorPickers: {fileID: 11400000, guid: 87d81f006a094fc4d8ee19cfb8dc4477, type: 2}
 --- !u!114 &968724468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3124,6 +3123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b68d58ea7eddb2d438138f193a47045b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _colorPickers: {fileID: 11400000, guid: 87d81f006a094fc4d8ee19cfb8dc4477, type: 2}
 --- !u!1 &1002301043
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,4 +13,5 @@ MonoBehaviour:
   m_Name: MeatPattyCookedFryableSO
   m_EditorClassIdentifier: 
   FriedPrefab: {fileID: 6339235456590757384, guid: 6643b97e5f14be34da021b7ad9caa4a2, type: 3}
+  State: 2
   FryingTimer: 6

@@ -22,6 +22,9 @@ public class ProgressTrackerSO : ScriptableObject
             ProgressNormalized = Progress / MaxProgress; 
         }
 
+        if (ProgressNormalized < 0) ProgressNormalized = 0;
+        if (ProgressNormalized > 1) ProgressNormalized = 1;
+
         OnUpdateProgress?.Invoke(ProgressNormalized);
     }
 

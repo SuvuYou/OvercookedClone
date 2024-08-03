@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class StoveCounter : BaseCounter
 {
-    public enum State {
+    public enum FryingState {
         Idle,
         Frying,
         Fried,
@@ -14,19 +14,19 @@ public class StoveCounter : BaseCounter
     public event Action OnStoveOn;
     public event Action OnStoveOff;
 
-    private NetworkVariable<State> _state = new();
+    private NetworkVariable<FryingState> _state = new();
     [SerializeField] private ProgressTrackerOnNetwork _fryingProgress;
 
     private void Update ()
     {
         switch(_state.Value)
         {
-            case State.Frying:
-            case State.Fried:
+            case FryingState.Frying:
+            case FryingState.Fried:
                 _processFrying();
                 break;
-            case State.Idle:
-            case State.Burned:
+            case FryingState.Idle:
+            case FryingState.Burned:
                 break;
         }
     }
@@ -35,8 +35,8 @@ public class StoveCounter : BaseCounter
     {
         if(!player.IsHoldingItem())
         {
-            _fryingProgress.SetProgressServerRpc(0);
-            _switchStateServerRpc(State.Idle); 
+            _resetProgress();
+            _switchStateServerRpc(FryingState.Idle); 
 
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
 
@@ -45,16 +45,21 @@ public class StoveCounter : BaseCounter
 
         if (KitchenItemParent.TryAddIngredientToPlateOwner(player, this))
         {
-            _fryingProgress.SetProgressServerRpc(0);
-            _switchStateServerRpc(State.Idle); 
+            _resetProgress();
+            _switchStateServerRpc(FryingState.Idle); 
+
+            return;
         }
-        else if (player.GetCurrentItemHeld().GetItemReference().IsFryable()) 
+
+        if (player.GetCurrentItemHeld().GetItemReference().IsFryable()) 
         {
-            _fryingProgress.SetProgressServerRpc(0);
-            _fryingProgress.SetMaxProgressServerRpc(player.GetCurrentItemHeld().GetItemReference().FryableSO.FryingTimer);   
-            _switchStateServerRpc(State.Frying);
+            _resetProgress();
+            _fryingProgress.SetMaxProgress(player.GetCurrentItemHeld().GetItemReference().FryableSO.FryingTimer);   
+            _switchStateServerRpc(player.GetCurrentItemHeld().GetItemReference().FryableSO.State);
 
             KitchenItemParent.SwapItemsOfTwoOwners(player, this);
+
+            return;
         }
     }
 
@@ -65,43 +70,48 @@ public class StoveCounter : BaseCounter
             return;
         }
 
-        float newProgress = _fryingProgress.Progress + Time.deltaTime;
-        _fryingProgress.SetProgressServerRpc(newProgress);
+        _fryingProgress.EnableContiniousProgressUpdate(progressRate: Time.deltaTime);
 
-        if (newProgress >= _fryingProgress.MaxProgress)
+        if (_fryingProgress.Progress >= _fryingProgress.MaxProgress)
         {
             KitchenItemSO friedItem = this.GetCurrentItemHeld().GetItemReference().FryableSO.FriedPrefab.GetItemReference();
             
             this.DestroyCurrentItemHeld();
             this.SpawnKitchenItem(friedItem);
 
+            _resetProgress();
+
             if (friedItem.IsFryable())
             {
-                _fryingProgress.SetMaxProgressServerRpc(friedItem.FryableSO.FryingTimer); 
-                _fryingProgress.SetProgressServerRpc(0);
-                _switchStateServerRpc(State.Fried);
+                _fryingProgress.SetMaxProgress(friedItem.FryableSO.FryingTimer); 
+                _switchStateServerRpc(friedItem.FryableSO.State);
             }
             else
             {
-                _fryingProgress.SetProgressServerRpc(0);
-                _switchStateServerRpc(State.Burned);
+                _switchStateServerRpc(FryingState.Burned);
             }
         }
     }
 
+    private void _resetProgress()
+    {
+        _fryingProgress.SetProgress(0);
+        _fryingProgress.DisableContiniousProgressUpdate();
+    }
+
     [ServerRpc(RequireOwnership = false)]
-    private void _switchStateServerRpc(State newState)
+    private void _switchStateServerRpc(FryingState newState)
     {
         _state.Value = newState;
         _triggerStoveEventsOnStateChangeClientRpc(newState);
     }
 
     [ClientRpc]
-    private void _triggerStoveEventsOnStateChangeClientRpc(State newState)
+    private void _triggerStoveEventsOnStateChangeClientRpc(FryingState newState)
     {
-        if (newState == State.Frying || newState == State.Fried) OnStoveOn?.Invoke();
+        if (newState == FryingState.Frying || newState == FryingState.Fried) OnStoveOn?.Invoke();
         else OnStoveOff?.Invoke();
     }
 
-    public State GetCurrentState() => _state.Value;
+    public FryingState GetCurrentState() => _state.Value;
 }
