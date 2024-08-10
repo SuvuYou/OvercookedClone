@@ -8,13 +8,16 @@ struct IngredientKitchenItemSO {
     public GameObject Visual;
 }
 
+[RequireComponent(typeof(IPlate))]
 public class BurgerCompleteVisual : MonoBehaviour
 {
-    [SerializeField] Plate _plate;
+    IPlate _plate;
     [SerializeField] List<IngredientKitchenItemSO> _visuals;
 
     private void Awake()
     {
+        _plate = GetComponent<IPlate>();
+
         _disableAllVisuals();
         _plate.OnIngredientsChange += _displayIngredient;
     }

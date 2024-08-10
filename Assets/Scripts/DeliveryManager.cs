@@ -71,17 +71,31 @@ public class DeliveryManager : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    private void _deliverSuccessfulRecipeClientRpc()
+    private void _deliverSuccessfulRecipe()
     {
         OnRemoveRecipe?.Invoke();
         OnDeliverySuccess?.Invoke();
     }
 
-    [ClientRpc]
-    private void _deliverFailedRecipeClientRpc()
+    private void _deliverFailedRecipe()
     {
         OnDeliveryFailed?.Invoke(); 
+    }
+
+    [ClientRpc]
+    private void _deliverSuccessfulRecipeClientRpc(ulong senderClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == senderClientId) return; 
+
+        _deliverSuccessfulRecipe();
+    }
+
+    [ClientRpc]
+    private void _deliverFailedRecipeClientRpc(ulong senderClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == senderClientId) return; 
+
+        _deliverFailedRecipe();
     }
 
     public bool TryDeliverRecipePlate(Plate plate)
@@ -95,27 +109,30 @@ public class DeliveryManager : NetworkBehaviour
 
             if (plate.Ingredients.OrderBy(ing => ing.ItemName).SequenceEqual(recipe.Ingredients.OrderBy(ing => ing.ItemName)))
             {
+                _deliverSuccessfulRecipe();
                 _deliverSuccessfulRecipeServerRpc(_currentWaitingRecipeList.IndexOf(recipe));
 
                 return true;
             }
         }
 
+        _deliverFailedRecipe();
         _deliverFailedRecipeServerRpc();
+
         return false;
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void _deliverSuccessfulRecipeServerRpc(int recipeIndexAtNetworkList)
+    private void _deliverSuccessfulRecipeServerRpc(int recipeIndexAtNetworkList, ServerRpcParams rpcParams = default)
     {
         _currentWaitingRecipeIndicesList.RemoveAt(recipeIndexAtNetworkList);
-        _deliverSuccessfulRecipeClientRpc();
+        _deliverSuccessfulRecipeClientRpc(senderClientId: rpcParams.Receive.SenderClientId);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void _deliverFailedRecipeServerRpc()
+    private void _deliverFailedRecipeServerRpc(ServerRpcParams rpcParams = default)
     {
-        _deliverFailedRecipeClientRpc();
+        _deliverFailedRecipeClientRpc(senderClientId: rpcParams.Receive.SenderClientId);
     }
 
     public List<RecipeSO> GetCurrentWaitingRecipeList() => _currentWaitingRecipeList;

@@ -3,11 +3,13 @@ using UnityEngine;
 
 public class PlateIconsUI : MonoBehaviour
 {
-    [SerializeField] private Plate _plate;
     [SerializeField] private GameObject _iconTemplate; 
+
+    private IPlate _plate;
 
     private void Awake()
     {
+        _plate = GetComponentInParent<IPlate>();
         _iconTemplate.SetActive(false);
         _plate.OnIngredientsChange += _spawnIngredientIcons;
     }

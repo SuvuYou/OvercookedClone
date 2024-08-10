@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.Netcode;
 
-public class Plate : KitchenItem
+public class Plate : KitchenItem, IPlate
 {
     public event Action<List<KitchenItemSO>> OnIngredientsChange;
     static private List<KitchenItemSO> AllowedIngredients;
@@ -38,19 +39,15 @@ public class Plate : KitchenItem
             }
         }
     }
-    
-    public bool TryAddIngredientOnNetwork(KitchenItemSO ingredient)
-    {
-        if (!AllowedIngredients.Contains(ingredient) || Ingredients.Contains(ingredient))
-        {
-            return false;
-        }
-        else
-        {
-            _addIngredientServerRpc(KitchenItemsList.Instance.GetIndexOfItem(ingredient));
 
-            return true;
-        }
+    public bool CanAddIngredient(KitchenItemSO ingredient)
+    {
+        return AllowedIngredients.Contains(ingredient) && !Ingredients.Contains(ingredient);
+    }
+    
+    public void AddIngredientOnNetwork(KitchenItemSO ingredient)
+    {
+        _addIngredientServerRpc(KitchenItemsList.Instance.GetIndexOfItem(ingredient));
     }
 
     [ServerRpc(RequireOwnership = false)]

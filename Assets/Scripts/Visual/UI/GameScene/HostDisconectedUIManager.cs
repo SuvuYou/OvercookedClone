@@ -25,7 +25,7 @@ public class HostDisconectedUIManager : MonoBehaviour
         NetworkManager.Singleton.OnClientDisconnectCallback += _displayOnDisconnect;
     }
 
-    private void _displayOnDisconnect (ulong disconectedClientId) 
+    private void _displayOnDisconnect(ulong disconectedClientId) 
     {
         if (disconectedClientId == NetworkManager.ServerClientId)
         {

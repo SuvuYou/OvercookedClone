@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
+using Unity.VisualScripting;
 
 public class PlayerReadyManager : NetworkBehaviour
 {
@@ -37,7 +38,7 @@ public class PlayerReadyManager : NetworkBehaviour
     {
         _updatePlayersReadyStatusServerRpc(clientId, status: false);
 
-        if (_areAllPlayersReady())
+        if (IsServer && _areAllPlayersReady())
         {
             SceneLoader.LoadSceneOnNetwork(Scene.Game);
         }

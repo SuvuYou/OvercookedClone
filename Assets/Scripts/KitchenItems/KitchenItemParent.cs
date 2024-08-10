@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -20,13 +22,14 @@ public class KitchenItemParent : NetworkBehaviour
         _triggerOnDropServerRpc();
     } 
 
-    private KitchenItemVisual _currentItemHeldFakeVisual;
+    private KitchenItemFakeVisual _currentItemHeldFakeVisual;
     private KitchenItem _currentItemHeld;
     private NetworkVariable<NetworkObjectReference> _currentItemHeldNetworkReference = new();
 
     public KitchenItem GetCurrentItemHeld() => _currentItemHeld;
     public NetworkObject GetNetworkObjectReference() => NetworkObject;
     public bool IsHoldingItem() => _currentItemHeld != null;
+    public bool IsHoldingFakeItem() => _currentItemHeldFakeVisual != null;
 
     public override void OnNetworkSpawn()
     {
@@ -53,25 +56,8 @@ public class KitchenItemParent : NetworkBehaviour
         _syncCurrentItemHeldWithNetworkReference(next);
     }
 
-    private void _syncCurrentItemHeldWithNetworkReference(NetworkObjectReference reference)
+    private void _destroyCurrentItemHeldFakeVisual()
     {
-        if (!reference.TryGet(out NetworkObject netObj) || !netObj.TryGetComponent(out KitchenItem item))
-        {
-            _currentItemHeld = null;
-
-            if (_currentItemHeldFakeVisual != null)
-            {
-                Destroy(_currentItemHeldFakeVisual.gameObject);
-                _currentItemHeldFakeVisual = null;
-            }
-        
-            return;
-        }
-
-        _currentItemHeld = item;
-        _currentItemHeld.gameObject.SetActive(true);
-
-        item.SetTargetToFollow(_itemSpawnPlaceholder);
         if (_currentItemHeldFakeVisual != null)
         {
             Destroy(_currentItemHeldFakeVisual.gameObject);
@@ -79,17 +65,42 @@ public class KitchenItemParent : NetworkBehaviour
         }
     }
 
-    public void SetFakeVisualKitchenItem(KitchenItemVisual visualFakeItem) 
+    private void _syncCurrentItemHeldWithNetworkReference(NetworkObjectReference reference)
     {
-        if (_currentItemHeldFakeVisual != null)
+        _destroyCurrentItemHeldFakeVisual();
+
+        if (reference.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out KitchenItem item))
         {
-            Destroy(_currentItemHeldFakeVisual.gameObject);
-            _currentItemHeldFakeVisual = null;
+            _currentItemHeld = item;
+
+            GameObjectScaleManipulator.Show(item.gameObject);
+            item.gameObject.SetActive(true);
+            item.SetTargetToFollow(_itemSpawnPlaceholder);
         }
+        else
+        {
+            _currentItemHeld = null;
+        } 
+    }
+
+    public void SwapFakeItemIntoReal()
+    {
+        _destroyCurrentItemHeldFakeVisual();
 
         if (IsHoldingItem())
         {
-            _currentItemHeld.gameObject.SetActive(false);
+            GameObjectScaleManipulator.Show(_currentItemHeld.gameObject);
+            _currentItemHeld.SetTargetToFollow(_itemSpawnPlaceholder);
+        }
+    }
+
+    public void SetFakeVisualKitchenItem(KitchenItemFakeVisual visualFakeItem) 
+    {
+        _destroyCurrentItemHeldFakeVisual();
+
+        if (IsHoldingItem())
+        {
+            GameObjectScaleManipulator.Hide(_currentItemHeld.gameObject);
         }
 
         if (visualFakeItem != null)
@@ -98,8 +109,27 @@ public class KitchenItemParent : NetworkBehaviour
         }
     } 
 
-    // TODO: Chech if delay issues are noticable;
-    // They are
+    public void SetFakeVisualPlate(PlateFakeVisual visualFakePlate, List<KitchenItemSO> ingredients = default) 
+    {
+        _destroyCurrentItemHeldFakeVisual();
+
+        if (IsHoldingItem())
+        {
+            GameObjectScaleManipulator.Hide(_currentItemHeld.gameObject);
+        }
+
+        if (visualFakePlate != null)
+        {
+            PlateFakeVisual newItem = Instantiate(visualFakePlate, _itemSpawnPlaceholder.transform.position, Quaternion.identity, _itemSpawnPlaceholder.transform);
+            if (ingredients != null)
+            {
+                newItem.AddIngredients(ingredients);
+            }
+
+            _currentItemHeldFakeVisual = newItem;
+        }
+    } 
+
     public void SetCurrentItemHeld(KitchenItem newItem) 
     {
         if (newItem != null)
@@ -174,16 +204,29 @@ public class KitchenItemParent : NetworkBehaviour
     
     public void SpawnKitchenItem(KitchenItemSO kithcenItem)
     {
+        if (_currentItemHeldFakeVisual != null) return;
+
+        if (kithcenItem.VisualFakeItem is PlateFakeVisual)
+        {
+            SetFakeVisualPlate(kithcenItem.VisualFakeItem as PlateFakeVisual);
+        }
+        else
+        {
+            SetFakeVisualKitchenItem(kithcenItem.VisualFakeItem);
+        }
+        
         SpawnKitchenItemOnKitchenItemParentServerRpc(KitchenItemsList.Instance.GetIndexOfItem(kithcenItem), kitchenItemParentRef: NetworkObject);
-        SetFakeVisualKitchenItem(kithcenItem.VisualFakeItem);
     }
 
     public void SpawnKitchenItem(KitchenItemSO plate, KitchenItemSO ingredient)
     {
+        if (IsHoldingFakeItem()) return;
+
         int plateIndex = KitchenItemsList.Instance.GetIndexOfItem(plate);
         int kitchenItemIndex = KitchenItemsList.Instance.GetIndexOfItem(ingredient);
 
-        SetFakeVisualKitchenItem(KitchenItemsList.Instance.Items[kitchenItemIndex].VisualFakeItem);
+        SetFakeVisualPlate(KitchenItemsList.Instance.Items[plateIndex].VisualFakeItem as PlateFakeVisual, new List<KitchenItemSO> { ingredient });
+    
         SpawnPlateWithIngredientOnKitchenItemParentServerRpc(plateIndex, kitchenItemIndex, kitchenItemParentRef: NetworkObject);
     }
 
@@ -209,7 +252,12 @@ public class KitchenItemParent : NetworkBehaviour
 
             if (plateItem.TryGetPlateComponent(out Plate plate))
             {
-                plate.TryAddIngredientOnNetwork(KitchenItemsList.Instance.Items[kitchenItemIndex]);
+                KitchenItemSO item = KitchenItemsList.Instance.Items[kitchenItemIndex];
+
+                if (plate.CanAddIngredient(item))
+                {
+                    plate.AddIngredientOnNetwork(item);
+                }
             }
         }
     }
@@ -221,30 +269,39 @@ public class KitchenItemParent : NetworkBehaviour
 
         if (tempParent1Item == null && tempParent2Item == null) return;
 
+        if (parent1.IsHoldingFakeItem() || parent2.IsHoldingFakeItem()) return;
+
+        static void setFakeItems(ref KitchenItem item,  ref KitchenItemParent parent) 
+        {
+            if (item == null)
+            {
+                parent.SetFakeVisualKitchenItem(null);
+
+                return;
+            }
+            
+            if (item.TryGetPlateComponent(out Plate plateItem))
+            {
+                parent.SetFakeVisualPlate(plateItem.GetItemReference().VisualFakeItem as PlateFakeVisual, plateItem.Ingredients);
+            }
+            else
+            {
+                parent.SetFakeVisualKitchenItem(item.GetItemReference().VisualFakeItem);
+            }
+        }
+
+        setFakeItems(item: ref tempParent2Item, parent: ref parent1);
+        setFakeItems(item: ref tempParent1Item, parent: ref parent2);
+
         parent1.SetCurrentItemHeld(tempParent2Item);
-        if (tempParent2Item != null)
-        {
-            parent1.SetFakeVisualKitchenItem(parent2.GetCurrentItemHeld().GetItemReference().VisualFakeItem);
-        }
-        else
-        {
-            parent1.SetFakeVisualKitchenItem(null);
-        }
-        
         parent2.SetCurrentItemHeld(tempParent1Item);
-        if (tempParent1Item != null)
-        {
-            parent2.SetFakeVisualKitchenItem(tempParent1Item.GetItemReference().VisualFakeItem);
-        }
-        else        
-        {
-            parent2.SetFakeVisualKitchenItem(null);
-        }
     }
 
     public static bool TryAddIngredientToPlateOwner(KitchenItemParent parent1, KitchenItemParent parent2)
     {
         if (!parent1.IsHoldingItem() || !parent2.IsHoldingItem()) return false;
+
+        if (parent1.IsHoldingFakeItem() || parent2.IsHoldingFakeItem()) return false;
 
         if (_tryAddIngredientToPlateOwner(plateOwner: parent1, ingredient: parent2.GetCurrentItemHeld().GetItemReference()))
         {
@@ -269,6 +326,8 @@ public class KitchenItemParent : NetworkBehaviour
     {
         if (!parent.IsHoldingItem()) return false;
 
+        if (parent.IsHoldingFakeItem()) return false;
+
         return (
             _tryAddIngredientToPlateOwner(plateOwner: parent, ingredient: kitchenItem)
         );
@@ -278,9 +337,21 @@ public class KitchenItemParent : NetworkBehaviour
     {
         if (plateOwner.GetCurrentItemHeld().TryGetPlateComponent(out Plate plate)) 
         {
-            if (plate.TryAddIngredientOnNetwork(ingredient))
+            if (plate.CanAddIngredient(ingredient))
             {
+                void syncWithNetwork(List<KitchenItemSO> ings) 
+                { 
+                    plateOwner.SwapFakeItemIntoReal();
+                    plate.OnIngredientsChange -= syncWithNetwork; 
+                };
+
+                plate.OnIngredientsChange += syncWithNetwork;
+
+                List<KitchenItemSO> allIngridients = plate.Ingredients.Concat(new List<KitchenItemSO> { ingredient }).ToList();
+                plateOwner.SetFakeVisualPlate(plate.GetItemReference().VisualFakeItem as PlateFakeVisual, allIngridients);
                 plateOwner.TriggerOnItemPickup();
+
+                plate.AddIngredientOnNetwork(ingredient);
 
                 return true;
             }

@@ -34,7 +34,7 @@ public class PlateCounter : BaseCounter
 
             if (_plateSpawnTimer.IsTimerUp())
             {
-                _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value + 1);
+                _updatePlatesCount(newPlatesCount: _platesCount.Value + 1);
                 _plateSpawnTimer.ResetTimer();
             }
         }
@@ -42,35 +42,53 @@ public class PlateCounter : BaseCounter
 
     public override void Interact(KitchenItemParent player)
     {
-        if (_platesCount.Value > 0)
-        {
-            if (!player.IsHoldingItem())
-            {
-                player.SpawnKitchenItem(_platePrefab.GetItemReference());
+        if (_platesCount.Value <= 0) return;
 
-                _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value - 1);
-            }
-            else if (Plate.IsIngridientAllowedOnPlate(player.GetCurrentItemHeld().GetItemReference()))
-            {
-                KitchenItemSO item = player.GetCurrentItemHeld().GetItemReference();
-                player.DestroyCurrentItemHeld();
-                player.SpawnKitchenItem(plate: _platePrefab.GetItemReference(), ingredient: item);
-                
-                _updatePlatesCountServerRpc(newPlatesCount: _platesCount.Value - 1);
-            }
+        if (!player.IsHoldingItem())
+        {
+            player.SpawnKitchenItem(_platePrefab.GetItemReference());
+
+            _updatePlatesCount(newPlatesCount: _platesCount.Value - 1);
+
+            return;
+        }
+
+        KitchenItemSO itemHeldByPlayer = player.GetCurrentItemHeld().GetItemReference();
+        
+        if (Plate.IsIngridientAllowedOnPlate(itemHeldByPlayer))
+        {
+            player.DestroyCurrentItemHeld();
+            player.SpawnKitchenItem(plate: _platePrefab.GetItemReference(), ingredient: itemHeldByPlayer);
+            
+            _updatePlatesCount(newPlatesCount: _platesCount.Value - 1);
+
+            return;
         }
     }
 
+    private void _triggerOnPlateNumberChange(int newPlatesCount)
+    {
+        OnPlateNumberChange?.Invoke(newPlatesCount);
+    }
+
+    private void _updatePlatesCount(int newPlatesCount) 
+    {
+        _triggerOnPlateNumberChange(newPlatesCount);
+        _updatePlatesCountServerRpc(newPlatesCount);
+    }
+
     [ServerRpc(RequireOwnership = false)]
-    private void _updatePlatesCountServerRpc(int newPlatesCount)
+    private void _updatePlatesCountServerRpc(int newPlatesCount, ServerRpcParams rpcParams = default)
     {
         _platesCount.Value = newPlatesCount;
-        _triggerOnPlateNumberChangeClientRpc(newPlatesCount);
+        _updatePlatesCountClientRpc(newPlatesCount, senderClientId: rpcParams.Receive.SenderClientId);
     }
 
     [ClientRpc]
-    private void _triggerOnPlateNumberChangeClientRpc(int newPlatesCount)
+    private void _updatePlatesCountClientRpc(int newPlatesCount, ulong senderClientId)
     {
-        OnPlateNumberChange?.Invoke(newPlatesCount);
+        if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
+
+        _triggerOnPlateNumberChange(newPlatesCount);
     }
 }

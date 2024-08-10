@@ -28,22 +28,27 @@ public class LobbyManager : NetworkBehaviour
 
     private void Update()
     {
-        if (_isTryingToJoin)
+        if (_isTryingToJoin) 
         {
-            _joinTimer.SubtractTime(Time.deltaTime);
-
-            if (_joinTimer.IsTimerUp())
-            {
-                _joinTimer.ResetTimer();
-                _isTryingToJoin = false;
-
-                if (!NetworkManager.IsConnectedClient)
-                {
-                    _triggerOnFailedToJoin();
-                    ShutNetworkManagerDown();
-                }
-            }
+            _joinTimeout();
         }
+    }
+
+    private void _joinTimeout()
+    {
+        _joinTimer.SubtractTime(Time.deltaTime);
+
+        if (_joinTimer.IsTimerUp())
+        {
+            _joinTimer.ResetTimer();
+            _isTryingToJoin = false;
+
+            if (!NetworkManager.IsConnectedClient)
+            {
+                _triggerOnFailedToJoin();
+                ShutNetworkManagerDown();
+            }
+        }   
     }
     
     public void StartHost()
