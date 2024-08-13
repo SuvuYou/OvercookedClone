@@ -1,6 +1,6 @@
+using Unity.Netcode;
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerInput))]
 public class PlayerController : KitchenItemParent
 {
     [SerializeField] private PlayerStateSO _playerState;
@@ -8,16 +8,32 @@ public class PlayerController : KitchenItemParent
 
     private float _raycastDistance = 1.2f;
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
-        PlayerInput.Instance.OnInteract += () => _selectedCounter.SelectedCounter?.Interact(this);
-        PlayerInput.Instance.OnInteractAlternative += () => _selectedCounter.SelectedCounter?.InteractAlternative(this);
+        base.OnNetworkSpawn();
+
+        if (IsOwner)
+        {
+            PlayerInput.Instance.OnInteract += () => _selectedCounter.SelectedCounter?.Interact(this);
+            PlayerInput.Instance.OnInteractAlternative += () => _selectedCounter.SelectedCounter?.InteractAlternative(this);
+        }
+
         OnItemDrop += () => SoundManager.SoundEvents.TriggerOnObjectDropSound(transform.position);
         OnItemPickup += () => SoundManager.SoundEvents.TriggerOnObjectPickupSound(transform.position);
+
+        if (IsServer)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += (ulong clientId) => this.DestroyCurrentItemHeld();
+        }
     }
 
     private void Update()
     {     
+        if (!IsOwner)
+        {
+            return;
+        }
+
         if (_playerState.IsWalking) 
         {
             _handleSelectCounter();

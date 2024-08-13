@@ -1,13 +1,25 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class KitchenItem : MonoBehaviour
+[RequireComponent(typeof(FollowTransform))]
+public class KitchenItem : NetworkBehaviour
 {
     [SerializeField] KitchenItemSO _itemReference;
+    FollowTransform _followTransform;
 
-    public KitchenItemSO GetItemReference()
+    public override void OnNetworkSpawn()
     {
-        return _itemReference;
+        _followTransform = GetComponent<FollowTransform>();
     }
+
+    public void SetTargetToFollow(Transform target)
+    {
+        _followTransform.SetTargetTransform(target);
+    }
+
+    public KitchenItemSO GetItemReference() => _itemReference;
+
+    public NetworkObject GetNetworkObjectReference() => NetworkObject;
 
     public bool TryGetPlateComponent(out Plate plate)
     {

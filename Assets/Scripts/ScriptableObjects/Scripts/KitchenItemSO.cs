@@ -4,6 +4,7 @@ using UnityEngine;
 public class KitchenItemSO : ScriptableObject
 {
     public KitchenItem Prefab;
+    public KitchenItemFakeVisual VisualFakeItem;
     public Sprite IconSprite;
     public string ItemName;
 

@@ -1,3 +1,5 @@
+using Unity.Netcode;
+
 public class DeliveryConunter : BaseCounter
 {
     public override void Interact(KitchenItemParent player)
@@ -8,12 +10,36 @@ public class DeliveryConunter : BaseCounter
             
             if (DeliveryManager.Instance.TryDeliverRecipePlate(plate))
             {
-                SoundManager.SoundEvents.TriggerOnDeliverSuccessSound(transform.position);
+                _triggerSuccessfulSoundEffectServerRpc();
             }
             else
             {
-                SoundManager.SoundEvents.TriggerOnDeliverFailedSound(transform.position);
+                _triggerFailedSoundEffectServerRpc();
             }
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerSuccessfulSoundEffectServerRpc()
+    {
+        _triggerSuccessfulSoundEffectclientRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerFailedSoundEffectServerRpc()
+    {
+        _triggerFailedSoundEffectClientRpc();
+    }
+
+    [ClientRpc]
+    private void _triggerSuccessfulSoundEffectclientRpc()
+    {
+        SoundManager.SoundEvents.TriggerOnDeliverSuccessSound(transform.position);
+    }
+
+    [ClientRpc]
+    private void _triggerFailedSoundEffectClientRpc()
+    {
+        SoundManager.SoundEvents.TriggerOnDeliverFailedSound(transform.position);
     }
 }

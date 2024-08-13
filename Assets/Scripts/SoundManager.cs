@@ -3,7 +3,7 @@ using UnityEngine;
 public class SoundManager : MonoBehaviour
 {
     public const string SFX_SOUND_VOLUME_PLAYER_PREF = "SFXVolume";
-    private const float INITIAL_VOLUME = 0.5f;
+    private const float DEFAULT_VOLUME = 0.5f;
 
     public static VolumeManager Volume = new();
     public static SoundEventsSO SoundEvents; 
@@ -20,7 +20,7 @@ public class SoundManager : MonoBehaviour
         }
         else
         {
-            Volume.SetVolume(INITIAL_VOLUME);
+            Volume.SetVolume(DEFAULT_VOLUME);
         }
     }
 

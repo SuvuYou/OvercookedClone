@@ -1,7 +1,9 @@
+using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PauseUIManager : MonoBehaviour
+public class PauseUIManager : NetworkBehaviour
 {
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _settingsButton;
@@ -18,38 +20,41 @@ public class PauseUIManager : MonoBehaviour
             _pausePanel.SetActive(false);
             GameManager.Instance.UnPauseGame();
         });
+
         _settingsButton.onClick.AddListener(() => 
         {
             _settingsUIManager.DisplaySettingsUI();
             _pausePanel.SetActive(false);
         });
+
         _mainMenuButton.onClick.AddListener(() => 
         {
-            GameManager.Instance.UnPauseGame();
+            LobbyManager.Instance.ShutNetworkManagerDown();
+            GameManager.Instance.UnPauseGame(isDisconecting: true);
             SceneLoader.LoadScene(Scene.MainMenu);
         });
 
-        PlayerInput.Instance.OnPausePressed += _handleVisibility;
+        GameManager.Instance.OnLocalPlayerPause += _handleVisibility;
     }
 
-    private void OnDestroy ()
+    public override void OnDestroy ()
     {
         _resumeButton.onClick.RemoveAllListeners(); 
         _settingsButton.onClick.RemoveAllListeners(); 
         _mainMenuButton.onClick.RemoveAllListeners(); 
 
-        PlayerInput.Instance.OnPausePressed -= _handleVisibility;
+        GameManager.Instance.OnLocalPlayerPause -= _handleVisibility;
     }
 
-    private void _handleVisibility()
+    private void _handleVisibility(bool isPaused)
     {
-        if (_pausePanel.activeSelf)
+        if (isPaused)
         {
-            _pausePanel.SetActive(false);
+            DisplayPauseUI();
         }
         else
         {
-            DisplayPauseUI();
+            _pausePanel.SetActive(false);
         }
     }
 

@@ -6,9 +6,9 @@ public class PlayerInput : MonoBehaviour
 {
     public static PlayerInput Instance;
 
-    private const string ACTION_BINDINGS_PLAYER_PREF = "ActionBindings"; 
+    private const string ACTION_BINDINGS_PLAYER_PREF = "ActionBindings";
 
-    public enum ActionBinding 
+    public enum ActionBinding
     {
         MoveUp,
         MoveRight,
@@ -23,7 +23,7 @@ public class PlayerInput : MonoBehaviour
         PauseGamepad
     }
 
-    public event Action OnInteractWaitingMode;
+    public event Action OnInteractDuringWaitingState;
 
     public event Action OnInteract;
     public event Action OnInteractAlternative;
@@ -39,7 +39,7 @@ public class PlayerInput : MonoBehaviour
         if (Instance != null)
         {
             Destroy(this);
-            
+
             return;
         }
 
@@ -68,7 +68,7 @@ public class PlayerInput : MonoBehaviour
     {
         Vector2 inputVector = _inputSystem.Standard.Move.ReadValue<Vector2>();
 
-        Vector3 movementDirection = new (inputVector.x, 0f, inputVector.y);
+        Vector3 movementDirection = new(inputVector.x, 0f, inputVector.y);
 
         return movementDirection.normalized;
     }
@@ -82,10 +82,10 @@ public class PlayerInput : MonoBehaviour
     {
         if (GameManager.Instance.IsPaused) return;
 
-        switch(GameManager.Instance.State)
+        switch (GameManager.Instance.State)
         {
             case GameState.Waiting:
-                OnInteractWaitingMode?.Invoke();
+                OnInteractDuringWaitingState?.Invoke();
                 break;
             case GameState.Active:
                 OnInteract?.Invoke();
@@ -104,33 +104,21 @@ public class PlayerInput : MonoBehaviour
 
     public string GetBindingKeyByAction(ActionBinding action)
     {
-        switch (action)
+        return action switch
         {
-            case ActionBinding.MoveUp:
-                return _inputSystem.Standard.Move.bindings[1].ToDisplayString();
-            case ActionBinding.MoveRight:
-                return _inputSystem.Standard.Move.bindings[2].ToDisplayString();
-            case ActionBinding.MoveDown:
-                return _inputSystem.Standard.Move.bindings[3].ToDisplayString();
-            case ActionBinding.MoveLeft:
-                return _inputSystem.Standard.Move.bindings[4].ToDisplayString();
-            case ActionBinding.MoveJoyStick:
-                return _inputSystem.Standard.Move.bindings[5].ToDisplayString();
-            case ActionBinding.Pause:
-                return _inputSystem.Standard.Pause.bindings[0].ToDisplayString();
-            case ActionBinding.PauseGamepad:
-                return _inputSystem.Standard.Pause.bindings[1].ToDisplayString();
-            case ActionBinding.Interact:
-                return _inputSystem.Standard.Interact.bindings[0].ToDisplayString();
-            case ActionBinding.InteractGamepad:
-                return _inputSystem.Standard.Interact.bindings[1].ToDisplayString();
-            case ActionBinding.InteractAlt:
-                return _inputSystem.Standard.InteractAlternative.bindings[0].ToDisplayString();
-            case ActionBinding.InteractAltGamepad:
-                return _inputSystem.Standard.InteractAlternative.bindings[1].ToDisplayString();
-            default:
-                return "ERR";
-        }
+            ActionBinding.MoveUp => _inputSystem.Standard.Move.bindings[1].ToDisplayString(),
+            ActionBinding.MoveRight => _inputSystem.Standard.Move.bindings[2].ToDisplayString(),
+            ActionBinding.MoveDown => _inputSystem.Standard.Move.bindings[3].ToDisplayString(),
+            ActionBinding.MoveLeft => _inputSystem.Standard.Move.bindings[4].ToDisplayString(),
+            ActionBinding.MoveJoyStick => _inputSystem.Standard.Move.bindings[5].ToDisplayString(),
+            ActionBinding.Pause => _inputSystem.Standard.Pause.bindings[0].ToDisplayString(),
+            ActionBinding.PauseGamepad => _inputSystem.Standard.Pause.bindings[1].ToDisplayString(),
+            ActionBinding.Interact => _inputSystem.Standard.Interact.bindings[0].ToDisplayString(),
+            ActionBinding.InteractGamepad => _inputSystem.Standard.Interact.bindings[1].ToDisplayString(),
+            ActionBinding.InteractAlt => _inputSystem.Standard.InteractAlternative.bindings[0].ToDisplayString(),
+            ActionBinding.InteractAltGamepad => _inputSystem.Standard.InteractAlternative.bindings[1].ToDisplayString(),
+            _ => "ERR"
+        };
     }
 
     public void RebindKey(ActionBinding actionToBind)
@@ -161,20 +149,20 @@ public class PlayerInput : MonoBehaviour
                 _performRebind(_inputSystem.Standard.InteractAlternative, actionIndex: 0);
                 break;
             default:
-                OnRebindKeyComplete?.Invoke();  
+                OnRebindKeyComplete?.Invoke();
                 break;
         }
     }
 
-    private void _performRebind (InputAction action, int actionIndex)
+    private void _performRebind(InputAction action, int actionIndex)
     {
         _inputSystem.Standard.Disable();
 
         action
         .PerformInteractiveRebinding(actionIndex)
-        .OnComplete(cb => 
+        .OnComplete(cb =>
         {
-            OnRebindKeyComplete?.Invoke();  
+            OnRebindKeyComplete?.Invoke();
             _inputSystem.Standard.Enable();
             PlayerPrefs.SetString(ACTION_BINDINGS_PLAYER_PREF, _inputSystem.SaveBindingOverridesAsJson());
             PlayerPrefs.Save();

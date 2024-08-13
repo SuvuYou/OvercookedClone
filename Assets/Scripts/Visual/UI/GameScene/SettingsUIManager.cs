@@ -22,7 +22,7 @@ public class SettingsUIManager : MonoBehaviour
         _musicVolumeSlider.OnValueChange += _updateMusicVolume;
         _SFXVolumeSlider.OnValueChange += _updateSFXVolume;
 
-        PlayerInput.Instance.OnPausePressed += _handleVisibility;
+        GameManager.Instance.OnLocalPlayerPause += _handleVisibility;
     }
 
     private void OnDestroy()
@@ -31,7 +31,7 @@ public class SettingsUIManager : MonoBehaviour
         _musicVolumeSlider.OnValueChange -= _updateMusicVolume;
         _SFXVolumeSlider.OnValueChange -= _updateSFXVolume;
 
-        PlayerInput.Instance.OnPausePressed -= _handleVisibility;
+        GameManager.Instance.OnLocalPlayerPause -= _handleVisibility;
     }
 
     private void _updateMusicVolume (float newValue)
@@ -48,9 +48,9 @@ public class SettingsUIManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    private void _handleVisibility()
+    private void _handleVisibility(bool isPaused)
     {
-        if (_settingsPanel.activeSelf)
+        if (!isPaused)
         {
             _settingsPanel.SetActive(false);
         }

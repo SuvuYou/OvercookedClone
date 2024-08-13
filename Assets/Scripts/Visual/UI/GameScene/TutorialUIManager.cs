@@ -6,14 +6,15 @@ public class TutorialUIManager : MonoBehaviour
 
     private void Start()
     {
-        _tutorialPanel.SetActive(true);
+        bool isGameWaiting = GameManager.Instance.State == GameState.Waiting;
+        _tutorialPanel.SetActive(isGameWaiting ? true : false);
 
-        GameManager.Instance.OnStartGame += _disableUI;
+        GameManager.Instance.OnLocalPlayerReady += _disableUI;
     }
 
     private void OnDestroy()
     {
-        GameManager.Instance.OnStartGame -= _disableUI;
+        GameManager.Instance.OnLocalPlayerReady -= _disableUI;
     }
 
     private void _disableUI()

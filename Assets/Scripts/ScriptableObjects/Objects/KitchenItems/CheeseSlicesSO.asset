@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: CheeseSlicesSO
   m_EditorClassIdentifier: 
   Prefab: {fileID: 6339235456590757384, guid: 2b0d401658b98ac45938d6de6070fb20, type: 3}
+  VisualFakeItem: {fileID: -6909472445848424899, guid: 8eb9c2146312a9940901d606699b60e1, type: 3}
   IconSprite: {fileID: 21300000, guid: 549cb4f2b86d1b84d8cd41c1cfde26c8, type: 3}
   ItemName: CheeseSlices
   SliceableSO: {fileID: 0}

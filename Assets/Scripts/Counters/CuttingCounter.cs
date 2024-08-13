@@ -1,48 +1,105 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class CuttingCounter : BaseCounter
 {
-    [SerializeField] private ProgressTrackerSO _cuttingProgress;
+    [SerializeField] private ProgressTrackerOnNetwork _cuttingProgress;
 
     public event Action OnCut;
 
+    private bool _isCutWithoutSwapping;
+    private KitchenItemSO _cachedSlicedItem;
+
     public override void Interact(KitchenItemParent player)
-    {
-        if (KitchenItemParent.TryAddIngredientToPlate(player, this))
+    {        
+        if (KitchenItemParent.TryAddIngredientToPlateOwner(player, this))
         {
-            _cuttingProgress.TriggerProgressUpdate(0);
+            _cuttingProgress.SetProgress(0);
+
+            return;
         }
 
-        if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsSliceable()) 
+        if (player.IsHoldingItem() && player.GetCurrentItemHeld().GetItemReference().IsSliceable())
         {
-            _cuttingProgress.TriggerProgressUpdate(0);
-            _cuttingProgress.SetMaxProgress(player.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount);
-            KitchenItemParent.SwapItemsOfTwoOwners(player, this);
+            int maxProgress = player.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount;
             
+            if (_trySafeSwapItems(player))
+            {
+                _cuttingProgress.SetProgress(0);
+                _cuttingProgress.SetMaxProgress(maxProgress);
+            
+                return;
+            }   
         }
-        else if (!player.IsHoldingItem()) 
+        
+        if (!player.IsHoldingItem())
         {
-            _cuttingProgress.TriggerProgressUpdate(0);
-            KitchenItemParent.SwapItemsOfTwoOwners(player, this);
+            if (_trySafeSwapItems(player))
+            {
+                _cuttingProgress.SetProgress(0);
+
+                return;
+            }   
         }
     }
 
     public override void InteractAlternative(KitchenItemParent player)
     {
-        if (IsHoldingItem() && GetCurrentItemHeld().GetItemReference().IsSliceable())
+        if (this.IsHoldingItem() && this.GetCurrentItemHeld().GetItemReference().IsSliceable() && !_isCutWithoutSwapping)
         {
-            _cuttingProgress.TriggerProgressUpdate(_cuttingProgress.Progress + 1);
-            OnCut?.Invoke();
-            SoundManager.SoundEvents.TriggerOnCutSound(transform.position);
+            float newCuttingProgress = _cuttingProgress.Progress + 1;
+            _cuttingProgress.SetProgress(newCuttingProgress);
+            _triggerCut();
 
-            if (GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount == _cuttingProgress.Progress)
+            if (this.GetCurrentItemHeld().GetItemReference().SliceableSO.CuttingSlicesCount == newCuttingProgress)
             {
-                KitchenItem slicedItem = GetCurrentItemHeld().GetItemReference().SliceableSO.SlicedPrefab;
-                DestroyCurrentItemHeld();
+                _cachedSlicedItem = this.GetCurrentItemHeld().GetItemReference().SliceableSO.SlicedPrefab.GetItemReference();
+                _isCutWithoutSwapping = true;
 
-                SetCurrentItemHeld(Instantiate(slicedItem, Vector3.zero, Quaternion.identity));
+                this.DestroyCurrentItemHeld();
+
+                this.SpawnKitchenItem(_cachedSlicedItem);
             }
         }
+    }
+
+    private bool _trySafeSwapItems(KitchenItemParent other)
+    {
+        if (GetCurrentItemHeld() != null && GetCurrentItemHeld().GetItemReference() != _cachedSlicedItem && _isCutWithoutSwapping)
+        {
+            return false;  
+        }
+
+        _isCutWithoutSwapping = false;
+        KitchenItemParent.SwapItemsOfTwoOwners(other, this);
+
+        return true;  
+    }
+
+    private void _triggerCut()
+    {
+        _triggerCutLocally();
+        _triggerOnCutEventsServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerOnCutEventsServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _triggerOnCutEventsClientRpc(sender: rpcParams.Receive.SenderClientId);
+    }
+
+    [ClientRpc]
+    private void _triggerOnCutEventsClientRpc(ulong sender)
+    {
+        if (NetworkManager.Singleton.LocalClientId == sender) return;
+        
+        _triggerCutLocally();
+    }
+
+    private void _triggerCutLocally()
+    {
+        OnCut?.Invoke();
+        SoundManager.SoundEvents.TriggerOnCutSound(transform.position);
     }
 }

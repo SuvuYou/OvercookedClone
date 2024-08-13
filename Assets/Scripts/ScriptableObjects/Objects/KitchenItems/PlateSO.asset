@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eaebf0b14cad6141b9251477ba4f32d, type: 3}
   m_Name: PlateSO
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 6339235456590757384, guid: cdf3323b32ae1134b89a8ee6031bffce, type: 3}
+  Prefab: {fileID: 1023089146704449385, guid: cdf3323b32ae1134b89a8ee6031bffce, type: 3}
+  VisualFakeItem: {fileID: 1068350436914472829, guid: 22575738716b91940bc1b9b0b06e6c69, type: 3}
   IconSprite: {fileID: 21300000, guid: 3928afb5321bb3d489bbd4ac581b29a2, type: 3}
   ItemName: Plate
   SliceableSO: {fileID: 0}

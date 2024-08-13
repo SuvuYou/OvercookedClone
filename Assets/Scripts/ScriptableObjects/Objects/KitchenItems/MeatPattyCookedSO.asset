@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: MeatPattyCookedSO
   m_EditorClassIdentifier: 
   Prefab: {fileID: 6339235456590757384, guid: fafa023f8cb062f44a23fb943e035211, type: 3}
+  VisualFakeItem: {fileID: 1988408335153597517, guid: 2f1caa1ab3c1ece47894a73d28f77cae, type: 3}
   IconSprite: {fileID: 21300000, guid: f1f50c7ef90b19741b26f2040806cf56, type: 3}
   ItemName: MeatPattyCooked
   SliceableSO: {fileID: 0}

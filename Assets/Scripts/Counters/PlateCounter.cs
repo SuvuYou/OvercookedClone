@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class PlateCounter : BaseCounter
@@ -6,10 +7,14 @@ public class PlateCounter : BaseCounter
     [SerializeField] private Plate _platePrefab;
     public event Action<int> OnPlateNumberChange;
 
-    private int _platesCount = 0;
+    private NetworkVariable<int> _platesCount = new (value: 0);
     private const int _platesCountLimit = 4;
-    private float _plateSpawnTimer;
-    private const float _plateSpawnTime = 2f;
+    private TimingTimer _plateSpawnTimer = new (defaultTimerValue: 2f);
+
+    public override void OnNetworkSpawn()
+    {
+        OnPlateNumberChange?.Invoke(_platesCount.Value);
+    }
 
     private void Update()
     {
@@ -18,44 +23,72 @@ public class PlateCounter : BaseCounter
             return;
         }
 
-        if (_platesCount < _platesCountLimit)
+        if (!IsServer)
         {
-            _plateSpawnTimer += Time.deltaTime;
+            return;
+        }
 
-            if (_plateSpawnTimer >= _plateSpawnTime)
+        if (_platesCount.Value < _platesCountLimit)
+        {
+            _plateSpawnTimer.SubtractTime(Time.deltaTime);
+
+            if (_plateSpawnTimer.IsTimerUp())
             {
-                _updatePlatesCount(newPlatesCount: _platesCount + 1);
-                _plateSpawnTimer = 0f;
+                _updatePlatesCount(newPlatesCount: _platesCount.Value + 1);
+                _plateSpawnTimer.ResetTimer();
             }
         }
     }
 
     public override void Interact(KitchenItemParent player)
     {
-        if (_platesCount > 0)
+        if (_platesCount.Value <= 0) return;
+
+        if (!player.IsHoldingItem())
         {
-            if (!player.IsHoldingItem())
-            {
-                player.SetCurrentItemHeld(Instantiate(_platePrefab, Vector3.zero, Quaternion.identity));
+            player.SpawnKitchenItem(_platePrefab.GetItemReference());
 
-                _updatePlatesCount(newPlatesCount: _platesCount - 1);
-            }
-            else if (Plate.IsIngridientAllowedOnPlate(player.GetCurrentItemHeld().GetItemReference()))
-            {
-                KitchenItemSO ingredient = player.GetCurrentItemHeld().GetItemReference();
-                Plate plate = Instantiate(_platePrefab, Vector3.zero, Quaternion.identity);
-                plate.TryAddIngredient(ingredient);
-                player.DestroyCurrentItemHeld();
-                player.SetCurrentItemHeld(plate);
+            _updatePlatesCount(newPlatesCount: _platesCount.Value - 1);
 
-                _updatePlatesCount(newPlatesCount: _platesCount - 1);
-            }
+            return;
+        }
+
+        KitchenItemSO itemHeldByPlayer = player.GetCurrentItemHeld().GetItemReference();
+        
+        if (Plate.IsIngridientAllowedOnPlate(itemHeldByPlayer))
+        {
+            player.DestroyCurrentItemHeld();
+            player.SpawnKitchenItem(plate: _platePrefab.GetItemReference(), ingredient: itemHeldByPlayer);
+            
+            _updatePlatesCount(newPlatesCount: _platesCount.Value - 1);
+
+            return;
         }
     }
 
-    private void _updatePlatesCount(int newPlatesCount)
+    private void _triggerOnPlateNumberChange(int newPlatesCount)
     {
-        _platesCount = newPlatesCount;
         OnPlateNumberChange?.Invoke(newPlatesCount);
+    }
+
+    private void _updatePlatesCount(int newPlatesCount) 
+    {
+        _triggerOnPlateNumberChange(newPlatesCount);
+        _updatePlatesCountServerRpc(newPlatesCount);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _updatePlatesCountServerRpc(int newPlatesCount, ServerRpcParams rpcParams = default)
+    {
+        _platesCount.Value = newPlatesCount;
+        _updatePlatesCountClientRpc(newPlatesCount, senderClientId: rpcParams.Receive.SenderClientId);
+    }
+
+    [ClientRpc]
+    private void _updatePlatesCountClientRpc(int newPlatesCount, ulong senderClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
+
+        _triggerOnPlateNumberChange(newPlatesCount);
     }
 }

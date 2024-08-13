@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class CounterContainer : BaseCounter
@@ -8,23 +9,37 @@ public class CounterContainer : BaseCounter
 
     public override void Interact(KitchenItemParent player)
     {
-        SetCurrentItemHeld(Instantiate(_kitchenItemToSpawn.Prefab, Vector3.zero, Quaternion.identity));
+        if (!player.IsHoldingItem())
+        {
+            player.SpawnKitchenItem(_kitchenItemToSpawn);
+            _triggerEventsLocallyAndOnNetwork();
+        }
 
         if (player.IsHoldingItem()) 
         {
-            if (!KitchenItemParent.TryAddIngredientToPlate(player, this))
+            if (KitchenItemParent.TryAddIngredientToPlateOwner(player, _kitchenItemToSpawn))
             {
-                DestroyCurrentItemHeld();
+                _triggerEventsLocallyAndOnNetwork();
             }
-            else
-            {
-                OnContainerOpen?.Invoke();
-            }
-
-            return;
         };
-        
-        KitchenItemParent.SwapItemsOfTwoOwners(player, this);
+    }
+
+    private void _triggerEventsLocallyAndOnNetwork()
+    {
+        OnContainerOpen?.Invoke();
+        _triggerEventOnNetworkServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerEventOnNetworkServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _triggerEventOnNetworkClientRpc(sender: rpcParams.Receive.SenderClientId);
+    }
+
+    [ClientRpc]
+    private void _triggerEventOnNetworkClientRpc(ulong sender)
+    {
+        if (NetworkManager.Singleton.LocalClientId == sender) return;
 
         OnContainerOpen?.Invoke();
     }
