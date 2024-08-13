@@ -27,12 +27,14 @@ public class DeliveryManager : NetworkBehaviour
         if (Instance != null)
         {
             Destroy(this);
+
+            return;
         }
-        else
-        {
-            _currentWaitingRecipeIndicesList = new NetworkList<int> ();
-            Instance = this;
-        }
+      
+        Instance = this;
+
+        _currentWaitingRecipeIndicesList = new NetworkList<int> ();
+        _currentWaitingRecipeIndicesList.OnListChanged += _onNetworkRecipeListChanged;
     }
 
     private void Update()
@@ -40,21 +42,6 @@ public class DeliveryManager : NetworkBehaviour
         if (GameManager.Instance.State != GameState.Active)
         {
             return;
-        }
-
-        if (IsClient)
-        {
-            if (_currentWaitingRecipeIndicesList.Count != _currentWaitingRecipeList.Count)
-            {
-                _currentWaitingRecipeList.Clear();
-
-                foreach (int index in _currentWaitingRecipeIndicesList)
-                {
-                    _currentWaitingRecipeList.Add(_availableRecipesList.AvailableRecipes[index]);
-                }
-
-                OnAddRecipe?.Invoke();
-            }
         }
 
         if (IsServer)
@@ -69,6 +56,23 @@ public class DeliveryManager : NetworkBehaviour
                 _currentWaitingRecipeIndicesList.Add(randRecipeIndex);
             }
         }
+    }
+
+    private void _onNetworkRecipeListChanged(NetworkListEvent<int> changeEvent)
+    {
+        _updateRecipeList();
+    }
+
+    private void _updateRecipeList()
+    {
+        _currentWaitingRecipeList.Clear();
+
+        foreach (int index in _currentWaitingRecipeIndicesList)
+        {
+            _currentWaitingRecipeList.Add(_availableRecipesList.AvailableRecipes[index]);
+        }
+
+        OnAddRecipe?.Invoke();
     }
 
     private void _deliverSuccessfulRecipe()
