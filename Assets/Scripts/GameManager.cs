@@ -35,6 +35,7 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private PlayerController _playerPrefab;
     [SerializeField] private List<KitchenItemSO> _allowedIngredients;
+    [SerializeField] private VirtualCamera _virtualCamera;
 
     private void Awake()
     {
@@ -63,7 +64,8 @@ public class GameManager : NetworkBehaviour
         {
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += _spawnPlayersOnLoad;
 
-            NetworkManager.Singleton.OnClientConnectedCallback += _spawnPlayersOnLateJoin; 
+            // handle spawn player on late join
+            NetworkManager.Singleton.OnClientConnectedCallback += _spawnPlayer; 
 
             NetworkManager.Singleton.OnClientDisconnectCallback += (ulong disconnectedClientId) => {
                 _playersPauseStatus[disconnectedClientId] = false;
@@ -72,19 +74,32 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    [ClientRpc]
+    private void _setCameraTargetClientRpc(ulong clientId, NetworkObjectReference localPlayerNetworkObject)
+    {
+        if (NetworkManager.Singleton.LocalClientId != clientId) return;
+
+        if (localPlayerNetworkObject.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out Transform playerTransform))
+        {
+            _virtualCamera.SetCameraTarger(target: playerTransform);
+        }
+    } 
+
     private void _spawnPlayersOnLoad(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
         {
-            PlayerController player = Instantiate(_playerPrefab);
-            player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, destroyWithScene: true);
+            _spawnPlayer(clientId);
         }
     }
 
-    private void _spawnPlayersOnLateJoin(ulong clientId)
+    private void _spawnPlayer(ulong clientId)
     {
         PlayerController player = Instantiate(_playerPrefab);
-        player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, destroyWithScene: true);
+        NetworkObject playerNetworkObject = player.GetComponent<NetworkObject>();
+        playerNetworkObject.SpawnAsPlayerObject(clientId, destroyWithScene: true);
+
+        _setCameraTargetClientRpc(clientId, playerNetworkObject);
     }
 
     public override void OnNetworkDespawn()
