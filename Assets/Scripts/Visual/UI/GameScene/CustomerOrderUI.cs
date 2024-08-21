@@ -1,30 +1,36 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlateIconsUI : MonoBehaviour
+public class CustomerOrderUI : MonoBehaviour
 {
     [SerializeField] private GameObject _iconTemplate; 
+    [SerializeField] private Customer _customer;
 
-    private IPlate _plate;
-
-    private void Awake()
+    private void Start()
     {
-        _plate = GetComponentInParent<IPlate>();
-        _iconTemplate.SetActive(false);
-        _plate.OnIngredientsChange += _spawnIngredientIcons;
-        _plate.OnDeliverPlate += _hideIngredientIcons;
+        _customer.OnSitDown += _enableIngredientsIcons;
+        _customer.OnRecieveOrder += _disableIngredientsIcons;
+
+        _spawnIngredientIcons(ingredients: _customer.Order.Ingredients);
+        _disableIngredientsIcons();
     }
 
     private void OnDestroy()
     {
-        _plate.OnIngredientsChange -= _spawnIngredientIcons;
-        _plate.OnDeliverPlate -= _hideIngredientIcons;
+        _customer.OnSitDown -= _enableIngredientsIcons;
+        _customer.OnRecieveOrder -= _disableIngredientsIcons;
     }
 
-    private void _hideIngredientIcons()
+    private void _enableIngredientsIcons() 
+    {
+        gameObject.SetActive(true);
+    }
+
+    private void _disableIngredientsIcons() 
     {
         gameObject.SetActive(false);
     }
+
 
     private void _spawnIngredientIcons(List<KitchenItemSO> ingredients)
     {

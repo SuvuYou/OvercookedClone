@@ -116,7 +116,7 @@ public class LobbyDataManager : NetworkBehaviour
     public void AddLobbyPlayerData(ulong clientId)
     {
         _playersJoinedCount++;
-        LobbyPlayerData data = new (clientId, color: _getFirstAvailibleColor(), playerName: "");
+        LobbyPlayerData data = new (clientId, color: _getFirstAvailableColor(), playerName: "");
         _connectedPlayersData.Add(data);
 
         _initializeJoinedClientPlayerNameClientRpc(playerIndex: _playersJoinedCount - 1, joinedClientId: clientId);
@@ -137,11 +137,11 @@ public class LobbyDataManager : NetworkBehaviour
         }
     }
 
-    private Color _getFirstAvailibleColor()
+    private Color _getFirstAvailableColor()
     {
         foreach (Color color in _colorPickers.GetColorsList())
         {
-            if (IsColorAvailible(color))
+            if (IsColorAvailable(color))
             {
                 return color;
             }
@@ -150,7 +150,7 @@ public class LobbyDataManager : NetworkBehaviour
         return _colorPickers.GetColorsList()[0];
     }
 
-    public bool IsColorAvailible(Color color)
+    public bool IsColorAvailable(Color color)
     {
         foreach (LobbyPlayerData playerData in _connectedPlayersData)
         {

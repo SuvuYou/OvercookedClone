@@ -40,7 +40,7 @@ public class LobbyCharacter : MonoBehaviour
         if (
             !_isPLayerConnected() || 
             !_isPLayerLocal() ||
-            !LobbyDataManager.Instance.IsColorAvailible(color)
+            !LobbyDataManager.Instance.IsColorAvailable(color)
             )
         {
             return;

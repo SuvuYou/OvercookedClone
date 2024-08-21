@@ -6,7 +6,7 @@ public class PlayerController : KitchenItemParent
     [SerializeField] private PlayerStateSO _playerState;
     [SerializeField] private SelectedCounterSO _selectedCounter;
 
-    private float _raycastDistance = 1.2f;
+    private float _raycastDistance = 2f;
 
     public override void OnNetworkSpawn()
     {

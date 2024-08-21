@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Unity.Netcode;
 
 public class Plate : KitchenItem, IPlate
 {
     public event Action<List<KitchenItemSO>> OnIngredientsChange;
+    public event Action OnDeliverPlate;
     static private List<KitchenItemSO> AllowedIngredients;
     public List<KitchenItemSO> Ingredients {get; private set;}
     
@@ -20,6 +20,12 @@ public class Plate : KitchenItem, IPlate
     public static void InitAllowedIngridients(List<KitchenItemSO> allowedIngredients)
     {
         AllowedIngredients = allowedIngredients;
+    }
+
+    public void DeliverPlate()
+    {
+        _triggerOnDeliverPlateServerRpc();
+        OnDeliverPlate?.Invoke();
     }
 
     private void Update()
@@ -40,6 +46,16 @@ public class Plate : KitchenItem, IPlate
         }
     }
 
+    public static bool IsIngridientAllowedOnPlate(KitchenItemSO ingredient)
+    {
+        return AllowedIngredients.Contains(ingredient);
+    }
+
+    public void ClearAllIngredientsOnNetwork()
+    {
+        _clearAllIngredientsServerRpc();
+    }
+
     public bool CanAddIngredient(KitchenItemSO ingredient)
     {
         return AllowedIngredients.Contains(ingredient) && !Ingredients.Contains(ingredient);
@@ -51,14 +67,28 @@ public class Plate : KitchenItem, IPlate
     }
 
     [ServerRpc(RequireOwnership = false)]
+    private void _clearAllIngredientsServerRpc()
+    {
+        _ingredientsIndices.Clear();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _triggerOnDeliverPlateServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _triggerOnDeliverPlateClientRpc(senderClientId: rpcParams.Receive.SenderClientId);
+    }
+
+    [ClientRpc]
+    private void _triggerOnDeliverPlateClientRpc(ulong senderClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
+        OnDeliverPlate?.Invoke();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     private void _addIngredientServerRpc(int kitchenItemIndex)
     {
         KitchenItemSO ingredient = KitchenItemsList.Instance.Items[kitchenItemIndex];
         _ingredientsIndices.Add(AllowedIngredients.IndexOf(ingredient));
-    }
-
-    public static bool IsIngridientAllowedOnPlate(KitchenItemSO ingredient)
-    {
-        return AllowedIngredients.Contains(ingredient);
     }
 }

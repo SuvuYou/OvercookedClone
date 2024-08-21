@@ -359,4 +359,12 @@ public class KitchenItemParent : NetworkBehaviour
 
         return false;
     }
+
+    public static void ClearAllIngredientsOffPlate(KitchenItemParent plateOwner)
+    {
+        if (plateOwner.GetCurrentItemHeld().TryGetPlateComponent(out Plate plate))
+        {
+            plate.ClearAllIngredientsOnNetwork();
+        }
+    }
 }
