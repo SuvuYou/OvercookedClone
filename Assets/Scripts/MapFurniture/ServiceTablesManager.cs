@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ServiceTablesManager : MonoBehaviour
@@ -18,5 +19,15 @@ public class ServiceTablesManager : MonoBehaviour
         }
 
         return mostSuitableTable;
+    }
+
+    public int GetIndexByTable(ServiceTable table) 
+    {
+        return Array.IndexOf(array: _tables, value: table);
+    }
+    
+    public ServiceTable GetTableByIndex(int index) 
+    {
+        return _tables[index];
     }
 }

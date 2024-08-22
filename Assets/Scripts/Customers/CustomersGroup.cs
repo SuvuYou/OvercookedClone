@@ -13,21 +13,30 @@ public class CustomersGroup : MonoBehaviour
     public List<Customer> Customers { get; private set; } = new();
     public int CustomersCount { get; private set; }
 
-    private void Awake()
+    // saves the group as template for easy recreation; saves indecies of each customer's recipe
+    private int[] _groupConfig = new int[4];
+    public int[] GroupConfig { get => _groupConfig; }
+
+    public void InitGroupSize(int forcedGroupSize = -1)
     {
-        CustomersCount = UnityEngine.Random.Range(MIN_CUSTOMERS_IN_GROUP, MAX_CUSTOMERS_IN_GROUP + 1);
+        if (forcedGroupSize == -1) CustomersCount = UnityEngine.Random.Range(MIN_CUSTOMERS_IN_GROUP, MAX_CUSTOMERS_IN_GROUP + 1);
+        else CustomersCount = forcedGroupSize;
     }
 
-    public void Populate(Transform spawnPosition)
+    public void Populate(Transform spawnPosition, int[] groupConfig)
     {
+        groupConfig ??= new int[4] {-1, -1, -1, -1};
+
         for (int i = 0; i < CustomersCount; i++)
         {
             Customer customer = Instantiate(_customerPrefab, spawnPosition);
-            customer.MakeAnOrder();
             Customers.Add(customer);
 
+            int recipeIndex = customer.MakeAnOrder(forceRecipeIndex: groupConfig[i]);
+            _groupConfig[i] = recipeIndex;
+
             customer.OnFinishEating += _checkIsGroupFinishedEating;
-            customer.OnCustomerLeaving += _checkIsGroupLeft;
+            customer.OnCustomerLeaving += _reduceCustomerCount;
         }
     }
 
@@ -50,7 +59,7 @@ public class CustomersGroup : MonoBehaviour
         }
     }
 
-    private void _checkIsGroupLeft()
+    private void _reduceCustomerCount()
     {
         CustomersCount--;
 

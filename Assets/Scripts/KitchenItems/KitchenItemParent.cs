@@ -362,7 +362,7 @@ public class KitchenItemParent : NetworkBehaviour
 
     public static void ClearAllIngredientsOffPlate(KitchenItemParent plateOwner)
     {
-        if (plateOwner.GetCurrentItemHeld().TryGetPlateComponent(out Plate plate))
+        if (plateOwner.IsHoldingItem() && plateOwner.GetCurrentItemHeld().TryGetPlateComponent(out Plate plate))
         {
             plate.ClearAllIngredientsOnNetwork();
         }

@@ -58,7 +58,7 @@ public class Customer : MonoBehaviour
     {
         if (!IsFinishedEating && _navMehAgent.remainingDistance < SITTING_DISTANCE_THRESHOLD)
         {
-            SitDown();
+            _sitDown();
             OnSitDown?.Invoke();
         }
 
@@ -85,11 +85,15 @@ public class Customer : MonoBehaviour
         }
     }
 
-    public void MakeAnOrder()
+    public int MakeAnOrder(int forceRecipeIndex = -1)
     {
-        int randomIndex = UnityEngine.Random.Range(0, _availableRecipesList.AvailableRecipes.Count);
+        int recipeIndex = UnityEngine.Random.Range(0, _availableRecipesList.AvailableRecipes.Count);
 
-        Order = _availableRecipesList.AvailableRecipes[randomIndex];
+        if (forceRecipeIndex != -1) recipeIndex = forceRecipeIndex;
+        
+        Order = _availableRecipesList.AvailableRecipes[recipeIndex];
+
+        return recipeIndex;
     } 
 
     public void Leave(Vector3 exitPosition)
@@ -98,16 +102,19 @@ public class Customer : MonoBehaviour
         _switchState(State.Walking);
     }
 
-    public bool TryRecieveOrder(Plate plate)
+    public bool CanRecieveOrder(Plate plate)
     {
         if (_currentState != State.WaitingForOrder) return false;
 
         if (!Order.Ingredients.OrderBy(ing => ing.ItemName).SequenceEqual(plate.Ingredients.OrderBy(ing => ing.ItemName))) return false;
         
+        return true;
+    } 
+
+    public void RecieveOrder()
+    {  
         _switchState(State.Eating);
         OnRecieveOrder?.Invoke();
-        
-        return true;
     } 
 
     public void AssingChair(Chair chair)
@@ -116,7 +123,7 @@ public class Customer : MonoBehaviour
         _startAgent(destination: chair.gameObject.transform.position);
     }
 
-    private void SitDown()
+    private void _sitDown()
     {
         _stopAgent();
         AssingedChair.TakeSit(sitter: this);

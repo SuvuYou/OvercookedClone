@@ -1,14 +1,16 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
+using Unity.Netcode;
 using UnityEngine;
 
-public class CustomersSpawnerManager : MonoBehaviour
+public class CustomersSpawnerManager : NetworkBehaviour
 {
     [SerializeField] private Transform _spawnPosition;
     [SerializeField] private CustomersGroup _customersGroupPrefab;
     [SerializeField] private ServiceTablesManager _serviceTablesManager;
 
-    private List<CustomersGroup> _activeCustomersGroups = new();
-    private List<CustomersGroup> _waitingCustomersGroups = new();
+    private List<CustomersGroup> _activeCustomers = new();
+    private List<CustomersGroup> _customersQueue = new();
 
     private const int MAX_GROUPS_WAITING_COUNT = 4; 
     private const float MIN_TIMEOUT_BETWEEN_GROUPS_SPAWNED = 1f; 
@@ -22,52 +24,78 @@ public class CustomersSpawnerManager : MonoBehaviour
             return;
         }
 
-        // TODO: only on server (isServer)
-        _handleSpawningWaitingGroups();
+        if (IsServer)
+        {
+            _handleSpawningGroupsForQueue();
+        }
     }
 
-    private void _handleSpawningWaitingGroups()
+    private void _handleSpawningGroupsForQueue()
     {
         _spawningGroupTimer.SubtractTime(Time.deltaTime);
 
-        if (_spawningGroupTimer.IsTimerUp() && _waitingCustomersGroups.Count < MAX_GROUPS_WAITING_COUNT)
+        if (_spawningGroupTimer.IsTimerUp() && _customersQueue.Count < MAX_GROUPS_WAITING_COUNT)
         {
             _spawningGroupTimer.ResetTimer();
 
             CustomersGroup group = Instantiate(_customersGroupPrefab, _spawnPosition);
-            _waitingCustomersGroups.Add(group);
+            _customersQueue.Add(group);
+            group.InitGroupSize();
 
-            CheckInWaitingGroupInside();
+            _checkInGroupFromQueue();
         }
     }
 
-    public void CheckInWaitingGroupInside()
+    private void _checkInGroupFromQueue()
     {
-        foreach (CustomersGroup group in _waitingCustomersGroups)
+        foreach (CustomersGroup group in _customersQueue)
         {
             ServiceTable serviceTable = _serviceTablesManager.FindAvailableTableForGroup(group);
             
             if (serviceTable == null) continue;
 
-            _activeCustomersGroups.Add(group);
+            _activeCustomers.Add(group);
 
-            group.Populate(spawnPosition: _spawnPosition);
-            group.AssingTable(serviceTable);
-            serviceTable.TakeTable(group);
-
-            group.OnGroupFinishedEating += () => 
-            {
-                group.Leave(exitPosition: _spawnPosition.position);
-                serviceTable.ClearTable();
-                serviceTable.FreeTable();
-                _activeCustomersGroups.Remove(group);
-                CheckInWaitingGroupInside();
-            };
+            _initiateGroupLocally(group, serviceTable);
+            _initiateGroupOnNetworkServerRpc(serviceTableIndex: _serviceTablesManager.GetIndexByTable(serviceTable), groupConfig: group.GroupConfig, groupSize: group.CustomersCount);
         }
 
-        foreach (CustomersGroup group in _activeCustomersGroups)
+        foreach (CustomersGroup group in _activeCustomers)
         {
-            if (_waitingCustomersGroups.Contains(group)) _waitingCustomersGroups.Remove(group);
+            if (_customersQueue.Contains(group)) _customersQueue.Remove(group);
         }
+    }
+
+    [ServerRpc]
+    private void _initiateGroupOnNetworkServerRpc(int serviceTableIndex, int groupSize, int[] groupConfig)
+    {
+        _initiateGroupOnNetworkClientRpc(serviceTableIndex, groupSize, groupConfig);
+    }
+    
+    [ClientRpc]
+    private void _initiateGroupOnNetworkClientRpc(int serviceTableIndex, int groupSize, int[] groupConfig)
+    {
+        if (NetworkManager.Singleton.IsServer) return;
+
+        CustomersGroup group = Instantiate(_customersGroupPrefab, _spawnPosition);
+        group.InitGroupSize(forcedGroupSize: groupSize);
+
+        _initiateGroupLocally(group, serviceTable: _serviceTablesManager.GetTableByIndex(serviceTableIndex), groupConfig: groupConfig);
+    }
+
+    private void _initiateGroupLocally(CustomersGroup group, ServiceTable serviceTable, int[] groupConfig = null)
+    {
+        group.Populate(spawnPosition: _spawnPosition, groupConfig);
+        group.AssingTable(serviceTable);
+        serviceTable.TakeTable(group);
+
+        group.OnGroupFinishedEating += () => 
+        {
+            group.Leave(exitPosition: _spawnPosition.position);
+            serviceTable.ClearTable();
+            serviceTable.FreeTable();
+            _activeCustomers.Remove(group);
+            _checkInGroupFromQueue();
+        };
     }
 }
