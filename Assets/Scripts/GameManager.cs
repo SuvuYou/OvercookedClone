@@ -4,6 +4,15 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
+// TODO LIST:
+// Economy
+// Customers visuals
+// Editing
+// Day cycles
+// Save mechanism
+// Challange
+// Head textures
+
 public enum GameState 
 {
     Waiting,

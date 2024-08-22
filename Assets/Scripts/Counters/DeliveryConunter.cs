@@ -8,14 +8,14 @@ public class DeliveryConunter : BaseCounter
         {
             player.DestroyCurrentItemHeld();
             
-            if (DeliveryManager.Instance.TryDeliverRecipePlate(plate))
-            {
-                _triggerSuccessfulSoundEffectServerRpc();
-            }
-            else
-            {
-                _triggerFailedSoundEffectServerRpc();
-            }
+            // if (DeliveryManager.Instance.TryDeliverRecipePlate(plate))
+            // {
+            //     _triggerSuccessfulSoundEffectServerRpc();
+            // }
+            // else
+            // {
+            //     _triggerFailedSoundEffectServerRpc();
+            // }
         }
     }
 

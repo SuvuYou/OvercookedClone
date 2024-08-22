@@ -10,14 +10,14 @@ public class RecipeDeliveryPopupUI : MonoBehaviour
 
     private void Start()
     {
-        DeliveryManager.Instance.OnDeliveryFailed += _showFailedDeliveryPopup;
-        DeliveryManager.Instance.OnDeliverySuccess += _showSuccessfulDeliveryPopup;
+        // DeliveryManager.Instance.OnDeliveryFailed += _showFailedDeliveryPopup;
+        // DeliveryManager.Instance.OnDeliverySuccess += _showSuccessfulDeliveryPopup;
     }
 
     private void OnDestroy()
     {
-        DeliveryManager.Instance.OnDeliveryFailed -= _showFailedDeliveryPopup;
-        DeliveryManager.Instance.OnDeliverySuccess -= _showSuccessfulDeliveryPopup;
+        // DeliveryManager.Instance.OnDeliveryFailed -= _showFailedDeliveryPopup;
+        // DeliveryManager.Instance.OnDeliverySuccess -= _showSuccessfulDeliveryPopup;
     }
 
     private void _showSuccessfulDeliveryPopup()

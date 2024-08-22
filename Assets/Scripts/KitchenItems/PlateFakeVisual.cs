@@ -4,7 +4,6 @@ using System.Collections.Generic;
 public class PlateFakeVisual : KitchenItemFakeVisual, IPlate
 {
     public event Action<List<KitchenItemSO>> OnIngredientsChange;
-    //TODO: use this???
     public event Action OnDeliverPlate;
     private List<KitchenItemSO> _ingredients = new();
 
@@ -16,5 +15,10 @@ public class PlateFakeVisual : KitchenItemFakeVisual, IPlate
         }
         
         OnIngredientsChange?.Invoke(_ingredients);
+    }
+
+    public void DeliverPlate()
+    {
+        OnDeliverPlate?.Invoke();
     }
 }
