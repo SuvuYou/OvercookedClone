@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class CustomersGroup : MonoBehaviour
 {
+    private Dictionary<int, float> _customerCountToPriceMultiplier = new()
+    {
+        {1, 1.1f},
+        {2, 1.2f},
+        {3, 1.3f},
+        {4, 1.4f},
+    };
+
     public event Action OnGroupFinishedEating;
 
     private const int MIN_CUSTOMERS_IN_GROUP = 1;
@@ -30,6 +38,7 @@ public class CustomersGroup : MonoBehaviour
         for (int i = 0; i < CustomersCount; i++)
         {
             Customer customer = Instantiate(_customerPrefab, spawnPosition);
+            customer.SetPriceMultiplier(priceMutiplier: _customerCountToPriceMultiplier[CustomersCount]);
             Customers.Add(customer);
 
             int recipeIndex = customer.MakeAnOrder(forceRecipeIndex: groupConfig[i]);

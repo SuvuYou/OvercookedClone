@@ -15,8 +15,8 @@ public class Customer : MonoBehaviour
 
     private const float SITTING_DISTANCE_THRESHOLD = 0.05f;
     private const float EXIT_DISTANCE_THRESHOLD = 0.5f;
-    private const float MIN_TIME_FOR_EATING = 20f;
-    private const float MAX_TIME_FOR_EATING = 40f;
+    private const float MIN_TIME_FOR_EATING = 4f;
+    private const float MAX_TIME_FOR_EATING = 12f;
 
     public event Action OnSitDown;
     public event Action OnRecieveOrder;
@@ -24,6 +24,7 @@ public class Customer : MonoBehaviour
     public event Action OnCustomerLeaving;
 
     public bool IsFinishedEating = false;
+    private float _priceMutiplier = 1f;
 
     private State _currentState = State.Idle;
 
@@ -56,6 +57,8 @@ public class Customer : MonoBehaviour
                 break;    
         } 
     }
+
+    public void SetPriceMultiplier(float priceMutiplier) => _priceMutiplier = priceMutiplier;
 
     private void _checkIsCloseToDestination()
     {
@@ -120,6 +123,7 @@ public class Customer : MonoBehaviour
     public void RecieveOrder()
     {  
         _switchState(State.Eating);
+        GameManager.Instance.UpdateBalance(increase: Order.Price * _priceMutiplier);
         OnRecieveOrder?.Invoke();
     } 
 

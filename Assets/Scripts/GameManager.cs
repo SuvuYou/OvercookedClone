@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -32,11 +33,14 @@ public class GameManager : NetworkBehaviour
     public event Action OnLocalPlayerReady;
     public event Action<bool> OnLocalPlayerPause;
     public event Action<float> OnCountdownTimerChange;
+    public event Action<float> OnBalanceUpdated;
 
     private Dictionary<ulong, bool> _playersReadyStatus = new();
     private Dictionary<ulong, bool> _playersPauseStatus = new();
     private NetworkVariable<GameState> _state = new (value: GameState.Waiting);
     public GameState State { get { return _state.Value; } }
+
+    private float _balance;
 
     private TimingTimer _countdownTimer = new (defaultTimerValue: 3f);
     public bool IsPaused { get; private set; } = false;
@@ -44,7 +48,7 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private PlayerController _playerPrefab;
     [SerializeField] private List<KitchenItemSO> _allowedIngredients;
-    [SerializeField] private VirtualCamera _virtualCamera;
+    [SerializeField] private VirtualCamera _virtualCamera;   
 
     private void Awake()
     {
@@ -109,6 +113,7 @@ public class GameManager : NetworkBehaviour
         playerNetworkObject.SpawnAsPlayerObject(clientId, destroyWithScene: true);
 
         _setCameraTargetClientRpc(clientId, playerNetworkObject);
+        _setBalanceClientRpc(_balance, senderClientId: NetworkManager.Singleton.LocalClientId);
     }
 
     public override void OnNetworkDespawn()
@@ -264,5 +269,34 @@ public class GameManager : NetworkBehaviour
         }
 
         return false;
+    }
+
+    public void UpdateBalance(float increase = 0, float decrease = 0)
+    {
+        float newBalance = _balance + increase - decrease;
+
+        _setBalanceLocally(newBalance);
+        // _setBalanceServerRpc(newBalance);
+    }  
+
+    private void _setBalanceLocally(float newBalance)
+    {
+        _balance = newBalance;
+        OnBalanceUpdated?.Invoke(newBalance);
+    }   
+
+    // TODO: maybe remove
+    [ServerRpc(RequireOwnership = false)]
+    private void _setBalanceServerRpc(float newBalance, ServerRpcParams rpcParams = default)
+    {
+        _setBalanceClientRpc(newBalance, senderClientId: rpcParams.Receive.SenderClientId);
+    }   
+
+    [ClientRpc]
+    private void _setBalanceClientRpc(float newBalance, ulong senderClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
+
+        _balance = newBalance;
     }
 }
