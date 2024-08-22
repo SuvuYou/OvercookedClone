@@ -1,10 +1,12 @@
+using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using Unity.Netcode;
 using UnityEngine;
 
 public class CustomersSpawnerManager : NetworkBehaviour
 {
+    public event Action<int[]> OnQueueUpdated;
+
     [SerializeField] private Transform _spawnPosition;
     [SerializeField] private CustomersGroup _customersGroupPrefab;
     [SerializeField] private ServiceTablesManager _serviceTablesManager;
@@ -39,8 +41,10 @@ public class CustomersSpawnerManager : NetworkBehaviour
             _spawningGroupTimer.ResetTimer();
 
             CustomersGroup group = Instantiate(_customersGroupPrefab, _spawnPosition);
-            _customersQueue.Add(group);
             group.InitGroupSize();
+
+            _customersQueue.Add(group);
+            _triggerUpdateQueueEvent();
 
             _checkInGroupFromQueue();
         }
@@ -62,7 +66,11 @@ public class CustomersSpawnerManager : NetworkBehaviour
 
         foreach (CustomersGroup group in _activeCustomers)
         {
-            if (_customersQueue.Contains(group)) _customersQueue.Remove(group);
+            if (_customersQueue.Contains(group)) 
+            {
+                _customersQueue.Remove(group);
+                _triggerUpdateQueueEvent();
+            }
         }
     }
 
@@ -98,4 +106,37 @@ public class CustomersSpawnerManager : NetworkBehaviour
             _checkInGroupFromQueue();
         };
     }
+
+    private void _triggerUpdateQueueEvent()
+    {
+        int[] queueOfSizes = new int[MAX_GROUPS_WAITING_COUNT];
+
+        for(int i = 0; i < _customersQueue.Count; i++)
+        {
+            queueOfSizes[i] = _customersQueue[i].CustomersCount;
+        }
+
+        _triggerUpdateQueueEventLocally(queueOfSizes);
+        _triggerUpdateQueueEventServerRpc(queueOfSizes);
+    }
+
+    [ServerRpc]
+    private void _triggerUpdateQueueEventServerRpc(int[] queueOfSizes)
+    {
+        _triggerUpdateQueueEventClientRpc(queueOfSizes);
+    }
+    
+    [ClientRpc]
+    private void _triggerUpdateQueueEventClientRpc(int[] queueOfSizes)
+    {
+        if (NetworkManager.Singleton.IsServer) return;
+
+        _triggerUpdateQueueEventLocally(queueOfSizes);
+    }
+
+    private void _triggerUpdateQueueEventLocally(int[] queueOfSizes)
+    {
+        OnQueueUpdated?.Invoke(queueOfSizes);
+    }
+    
 }

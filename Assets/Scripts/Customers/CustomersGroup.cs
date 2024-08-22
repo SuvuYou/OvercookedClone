@@ -14,7 +14,7 @@ public class CustomersGroup : MonoBehaviour
     public int CustomersCount { get; private set; }
 
     // saves the group as template for easy recreation; saves indecies of each customer's recipe
-    private int[] _groupConfig = new int[4];
+    private int[] _groupConfig = new int[MAX_CUSTOMERS_IN_GROUP];
     public int[] GroupConfig { get => _groupConfig; }
 
     public void InitGroupSize(int forcedGroupSize = -1)
@@ -25,7 +25,7 @@ public class CustomersGroup : MonoBehaviour
 
     public void Populate(Transform spawnPosition, int[] groupConfig)
     {
-        groupConfig ??= new int[4] {-1, -1, -1, -1};
+        groupConfig ??= new int[MAX_CUSTOMERS_IN_GROUP] {-1, -1, -1, -1};
 
         for (int i = 0; i < CustomersCount; i++)
         {
