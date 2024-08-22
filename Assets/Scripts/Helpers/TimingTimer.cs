@@ -3,7 +3,7 @@ using System;
 
 public struct TimingTimer
 {
-    public float Timer { get; private set; }
+    public float Time { get; private set; }
     private float _minDefaultTimerValue;
     private float _maxDefaultTimerValue;
     private Random _random;
@@ -13,7 +13,7 @@ public struct TimingTimer
         _maxDefaultTimerValue = defaultTimerValue;
         _random = new Random();
 
-        Timer = 0f;
+        Time = 0f;
         ResetTimer();
     }
 
@@ -22,23 +22,21 @@ public struct TimingTimer
         _maxDefaultTimerValue = maxDefaultTimerValue;
         _random = new Random();
 
-        Timer = 0f;
+        Time = 0f;
         ResetTimer();
     }
 
     public void SubtractTime(float timeAmount)
     {
-        Timer -= timeAmount;
+        Time -= timeAmount;
     }
 
-    public bool IsTimerUp()
-    {
-        return Timer <= 0f;
-    }
+    public readonly bool IsTimerUp() => Time <= 0f;
+    
 
     public void ResetTimer()
     {
-        Timer = _getRandomTimeInRange();
+        Time = _getRandomTimeInRange();
     }
 
     private float _getRandomTimeInRange()

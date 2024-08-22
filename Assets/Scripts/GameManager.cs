@@ -118,7 +118,7 @@ public class GameManager : NetworkBehaviour
                 break;
             case GameState.Countdown:
                 _countdownTimer.SubtractTime(Time.deltaTime);
-                _triggerOnCountdownEventClientRpc(_countdownTimer.Timer);
+                _triggerOnCountdownEventClientRpc(_countdownTimer.Time);
 
                 if (_countdownTimer.IsTimerUp())
                 {

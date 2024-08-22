@@ -15,8 +15,8 @@ public class Customer : MonoBehaviour
 
     private const float SITTING_DISTANCE_THRESHOLD = 0.05f;
     private const float EXIT_DISTANCE_THRESHOLD = 0.5f;
-    private const float MIN_TIME_FOR_EATING = 2f;
-    private const float MAX_TIME_FOR_EATING = 4f;
+    private const float MIN_TIME_FOR_EATING = 20f;
+    private const float MAX_TIME_FOR_EATING = 40f;
 
     public event Action OnSitDown;
     public event Action OnRecieveOrder;
@@ -32,11 +32,14 @@ public class Customer : MonoBehaviour
     public Chair AssingedChair { get; private set; }
 
     private TimingTimer _eatingTimer = new(minDefaultTimerValue: MIN_TIME_FOR_EATING, maxDefaultTimerValue: MAX_TIME_FOR_EATING);
+    private ProgressTracker _eatingProgressTracker = new();
+    public ProgressTracker EatingProgressTracker { get => _eatingProgressTracker; }
     private NavMeshAgent _navMehAgent;
 
     private void Awake()
     {
         _navMehAgent = GetComponent<NavMeshAgent>();
+        _eatingProgressTracker.SetMaxProgress(_eatingTimer.Time);
     }
 
     private void Update()
@@ -72,10 +75,13 @@ public class Customer : MonoBehaviour
     private void _updateEatingTimer()
     {
         _eatingTimer.SubtractTime(Time.deltaTime);
+        _eatingProgressTracker.TriggerProgressUpdate(newProgress: _eatingProgressTracker.Progress + Time.deltaTime);
 
         if (_eatingTimer.IsTimerUp())
         {
             _eatingTimer.ResetTimer();
+            _eatingProgressTracker.SetMaxProgress(_eatingTimer.Time);
+            _eatingProgressTracker.TriggerProgressUpdate(newProgress: 0);
 
             AssingedChair.FinishDish();
             _switchState(State.Idle);
