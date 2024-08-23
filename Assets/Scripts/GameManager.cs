@@ -6,13 +6,11 @@ using Unity.Netcode;
 using UnityEngine;
 
 // TODO LIST:
-// Economy
-// Customers visuals
 // Editing
 // Day cycles
 // Save mechanism
 // Challange
-// Head textures
+// Head textures and more colors
 
 public enum GameState 
 {

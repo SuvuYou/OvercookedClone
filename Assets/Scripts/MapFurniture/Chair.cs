@@ -23,6 +23,7 @@ public class Chair : BaseCounter
     {
         _currentCustomer = sitter;
         sitter.gameObject.transform.position = _sittingPlacePosition.position;
+        sitter.gameObject.transform.rotation = _sittingPlacePosition.transform.rotation;
     }
 
     public void FinishDish()

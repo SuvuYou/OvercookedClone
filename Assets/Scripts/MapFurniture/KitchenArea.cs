@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class KitchenArea : MonoBehaviour
@@ -7,16 +8,22 @@ public class KitchenArea : MonoBehaviour
     public event Action OnKitchenExit;
 
     void OnTriggerEnter(Collider other) {
-        if (other.TryGetComponent(out PlayerController _))
+        if (other.TryGetComponent(out PlayerController player))
         {
-            OnKitchenEnter?.Invoke();
+            if (player.OwnerClientId == NetworkManager.Singleton.LocalClientId)
+            {
+                OnKitchenEnter?.Invoke();
+            }
         }
     }
 
     void OnTriggerExit(Collider other) {
-        if (other.TryGetComponent(out PlayerController _))
+        if (other.TryGetComponent(out PlayerController player))
         {
-            OnKitchenExit?.Invoke();
+            if (player.OwnerClientId == NetworkManager.Singleton.LocalClientId)
+            {
+                OnKitchenExit?.Invoke();
+            }
         }
     }
 }

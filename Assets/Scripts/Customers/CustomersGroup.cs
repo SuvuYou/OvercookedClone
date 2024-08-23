@@ -6,10 +6,10 @@ public class CustomersGroup : MonoBehaviour
 {
     private Dictionary<int, float> _customerCountToPriceMultiplier = new()
     {
-        {1, 1.1f},
-        {2, 1.2f},
-        {3, 1.3f},
-        {4, 1.4f},
+        {1, 1f},
+        {2, 1.1f},
+        {3, 1.2f},
+        {4, 1.3f},
     };
 
     public event Action OnGroupFinishedEating;

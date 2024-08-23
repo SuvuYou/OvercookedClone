@@ -63,7 +63,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e494ac442c5821542a17fe92fd4f335c, type: 2}
+  - {fileID: 2100000, guid: ee4f73942075289499897196bc38d1e8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -177,8 +177,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3294758251327466532}
+  - component: {fileID: 2317678907298735027}
+  - component: {fileID: -7392687458924803762}
+  - component: {fileID: 804484460454270548}
   m_Layer: 0
-  m_Name: TEST
+  m_Name: CustomerVisual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -201,6 +204,60 @@ Transform:
   - {fileID: 3294758251441920654}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &2317678907298735027
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3294758251327466535}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: dac99bf3fb7d0594387979062dc44708, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-7392687458924803762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3294758251327466535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1de13d62ca8b64241ae1348bbe5c6d63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _customer: {fileID: 0}
+--- !u!114 &804484460454270548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3294758251327466535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8399bf51705d50b4e8a9e838c911bf07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _headMesh: {fileID: 3294758250785316822}
+  _bodyMesh: {fileID: 3294758251441920655}
+  _customer: {fileID: 0}
+  _material: {fileID: 2100000, guid: ee4f73942075289499897196bc38d1e8, type: 2}
+  DEFAULT_COLOR: {r: 1, g: 1, b: 1, a: 0}
+  WAITING_FOR_ORDER_COLOR: {r: 0.9529412, g: 0.88235295, b: 0.3764706, a: 0}
+  EATING_COLOR: {r: 0.9254902, g: 0.44313726, b: 0.7490196, a: 0}
+  WAITING_TO_LEAVE_COLOR: {r: 0.44313726, g: 0.74509805, b: 0.9254902, a: 0}
 --- !u!1 &3294758251441920689
 GameObject:
   m_ObjectHideFlags: 0
@@ -262,7 +319,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e494ac442c5821542a17fe92fd4f335c, type: 2}
+  - {fileID: 2100000, guid: ee4f73942075289499897196bc38d1e8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

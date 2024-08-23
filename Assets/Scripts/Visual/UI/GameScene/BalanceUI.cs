@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BalanceUI : MonoBehaviour
 {
@@ -30,6 +31,7 @@ public class BalanceUI : MonoBehaviour
     private void _updateBalanceText(float balance)
     {
         _balanceText.text = _convertBalanceToString(balance);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_balanceText.rectTransform);
     }
 
     private string _convertBalanceToString(float balance)

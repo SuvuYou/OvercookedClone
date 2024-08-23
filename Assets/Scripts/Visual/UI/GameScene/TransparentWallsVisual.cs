@@ -4,8 +4,8 @@ using UnityEngine;
 public class TransparentWallsVisual : MonoBehaviour
 {
     private const string MATERIAL_ALPHA_VARIABLE_NAME = "_Alpha"; 
-    private float TRANPARANT_WALL_MATERIAL_MAX_ALPHA = 1f;
-    private float TRANPARANT_WALL_MATERIAL_MIN_ALPHA = 0.4f;
+    private const float TRANPARANT_WALL_MATERIAL_MAX_ALPHA = 1f;
+    private const float TRANPARANT_WALL_MATERIAL_MIN_ALPHA = 0.4f;
 
     private float _currentAlpha = 0f;
 

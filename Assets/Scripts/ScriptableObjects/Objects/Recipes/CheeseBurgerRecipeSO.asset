@@ -18,3 +18,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5f7853aecfca67847aa996f0474c28e5, type: 2}
   RecipeName: Cheese Burger
   Price: 120
+  EatingTime: 6

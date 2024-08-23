@@ -15,8 +15,6 @@ public class Customer : MonoBehaviour
 
     private const float SITTING_DISTANCE_THRESHOLD = 0.05f;
     private const float EXIT_DISTANCE_THRESHOLD = 0.5f;
-    private const float MIN_TIME_FOR_EATING = 4f;
-    private const float MAX_TIME_FOR_EATING = 12f;
 
     public event Action OnSitDown;
     public event Action OnRecieveOrder;
@@ -24,15 +22,17 @@ public class Customer : MonoBehaviour
     public event Action OnCustomerLeaving;
 
     public bool IsFinishedEating = false;
-    private float _priceMutiplier = 1f;
+    public float PriceMutiplier { get; private set; } = 1f;
 
     private State _currentState = State.Idle;
+
+    private Vector3 _lastPositionBeforeSittingDown;
 
     [SerializeField] private AvailableRecipesListSO _availableRecipesList;
     public RecipeSO Order { get; private set; }
     public Chair AssingedChair { get; private set; }
 
-    private TimingTimer _eatingTimer = new(minDefaultTimerValue: MIN_TIME_FOR_EATING, maxDefaultTimerValue: MAX_TIME_FOR_EATING);
+    private TimingTimer _eatingTimer = new();
     private ProgressTracker _eatingProgressTracker = new();
     public ProgressTracker EatingProgressTracker { get => _eatingProgressTracker; }
     private NavMeshAgent _navMehAgent;
@@ -40,7 +40,6 @@ public class Customer : MonoBehaviour
     private void Awake()
     {
         _navMehAgent = GetComponent<NavMeshAgent>();
-        _eatingProgressTracker.SetMaxProgress(_eatingTimer.Time);
     }
 
     private void Update()
@@ -58,7 +57,9 @@ public class Customer : MonoBehaviour
         } 
     }
 
-    public void SetPriceMultiplier(float priceMutiplier) => _priceMutiplier = priceMutiplier;
+    public bool IsWalking () => _navMehAgent.isActiveAndEnabled && !_navMehAgent.isStopped;
+    
+    public void SetPriceMultiplier(float priceMutiplier) => PriceMutiplier = priceMutiplier;
 
     private void _checkIsCloseToDestination()
     {
@@ -101,12 +102,15 @@ public class Customer : MonoBehaviour
         if (forceRecipeIndex != -1) recipeIndex = forceRecipeIndex;
         
         Order = _availableRecipesList.AvailableRecipes[recipeIndex];
+        _eatingTimer.SetDefaultTimerTime(defaultTimerValue: Order.EatingTime);
+        _eatingProgressTracker.SetMaxProgress(Order.EatingTime);
 
         return recipeIndex;
     } 
 
     public void Leave(Vector3 exitPosition)
     {
+        gameObject.transform.position = _lastPositionBeforeSittingDown;
         _startAgent(destination: exitPosition);
         _switchState(State.Walking);
     }
@@ -123,7 +127,7 @@ public class Customer : MonoBehaviour
     public void RecieveOrder()
     {  
         _switchState(State.Eating);
-        GameManager.Instance.UpdateBalance(increase: Order.Price * _priceMutiplier);
+        GameManager.Instance.UpdateBalance(increase: Order.Price * PriceMutiplier);
         OnRecieveOrder?.Invoke();
     } 
 
@@ -136,6 +140,7 @@ public class Customer : MonoBehaviour
     private void _sitDown()
     {
         _stopAgent();
+        _lastPositionBeforeSittingDown = gameObject.transform.position;
         AssingedChair.TakeSit(sitter: this);
         _switchState(State.WaitingForOrder);
     }

@@ -8,11 +8,11 @@ public struct TimingTimer
     private float _maxDefaultTimerValue;
     private Random _random;
 
-    public TimingTimer (float defaultTimerValue){
+    public TimingTimer (float defaultTimerValue = 0f){
         _minDefaultTimerValue = defaultTimerValue;
         _maxDefaultTimerValue = defaultTimerValue;
         _random = new Random();
-
+        
         Time = 0f;
         ResetTimer();
     }
@@ -24,6 +24,29 @@ public struct TimingTimer
 
         Time = 0f;
         ResetTimer();
+    }
+
+    public void SetDefaultTimerTime (float defaultTimerValue){
+        _minDefaultTimerValue = defaultTimerValue;
+        _maxDefaultTimerValue = defaultTimerValue;
+        _random = new Random();
+
+        Time = 0f;
+        ResetTimer();
+    }
+
+    public void SetDefaultTimerTime (float minDefaultTimerValue, float maxDefaultTimerValue){
+        _minDefaultTimerValue = minDefaultTimerValue;
+        _maxDefaultTimerValue = maxDefaultTimerValue;
+        _random = new Random();
+
+        Time = 0f;
+        ResetTimer();
+    }
+
+    public void ForceFinish()
+    {
+        Time = 0f;  
     }
 
     public void SubtractTime(float timeAmount)
