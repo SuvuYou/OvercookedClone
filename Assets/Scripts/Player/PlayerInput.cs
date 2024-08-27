@@ -24,6 +24,7 @@ public class PlayerInput : MonoBehaviour
     }
 
     public event Action OnInteractDuringWaitingState;
+    public event Action OnInteractDuringEditing;
 
     public event Action OnInteract;
     public event Action OnInteractAlternative;
@@ -89,6 +90,9 @@ public class PlayerInput : MonoBehaviour
                 break;
             case GameState.Active:
                 OnInteract?.Invoke();
+                break;
+            case GameState.Editing:
+                OnInteractDuringEditing?.Invoke();
                 break;
         }
     }

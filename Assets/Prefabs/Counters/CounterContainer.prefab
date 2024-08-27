@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -676675470942173412, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
+      propertyPath: _selectedVisualIndicator
+      value: 
+      objectReference: {fileID: 7397292668500093150}
     - target: {fileID: 3902124013254628595, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -47,6 +51,10 @@ PrefabInstance:
     - target: {fileID: 3902124013254628595, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6623098688898365317, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 4247968365
       objectReference: {fileID: 0}
     - target: {fileID: 6969974179371722385, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: m_Name
@@ -88,9 +96,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6b2ccee42cfedd4b935b1bcb387c277, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _itemSpawnPlaceholder: {fileID: 8174049576930362159}
   _selectedCounter: {fileID: 11400000, guid: 0fda51236e27a0c409e8339a8ca08d33, type: 2}
   _selectedVisualIndicator: {fileID: 7397292668500093150}
-  _itemSpawnPlaceholder: {fileID: 8174049576930362159}
   _kitchenItemToSpawn: {fileID: 0}
 --- !u!4 &8174049576930362159 stripped
 Transform:

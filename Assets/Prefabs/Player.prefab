@@ -114,6 +114,7 @@ MonoBehaviour:
   - {x: -2, y: 0, z: 2}
   - {x: 2, y: 0, z: 2}
   - {x: -2, y: 0, z: -2}
+  _counterLayerNumber: 7
 --- !u!114 &1949664368359563392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -129,6 +130,7 @@ MonoBehaviour:
   _itemSpawnPlaceholder: {fileID: 7707701049297722432}
   _playerState: {fileID: 11400000, guid: f90f5a907d73eca4e9503b6272880b80, type: 2}
   _selectedCounter: {fileID: 11400000, guid: 0fda51236e27a0c409e8339a8ca08d33, type: 2}
+  _selectedEditableItem: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
 --- !u!114 &3709146948679809799
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,6 +234,10 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 3103553623
       objectReference: {fileID: 0}
+    - target: {fileID: 3294758250785316822, guid: 1c5dda3c7cd3cf742afcade5419faeab, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 35cb298c48870fc49aae853ccb955a5d, type: 2}
     - target: {fileID: 3294758251327466532, guid: 1c5dda3c7cd3cf742afcade5419faeab, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -276,6 +282,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerVisual
       objectReference: {fileID: 0}
+    - target: {fileID: 3294758251441920655, guid: 1c5dda3c7cd3cf742afcade5419faeab, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 35cb298c48870fc49aae853ccb955a5d, type: 2}
     m_RemovedComponents:
     - {fileID: 6024899996280613204, guid: 1c5dda3c7cd3cf742afcade5419faeab, type: 3}
     - {fileID: -6911052327138806376, guid: 1c5dda3c7cd3cf742afcade5419faeab, type: 3}

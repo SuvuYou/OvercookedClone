@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -57,7 +56,7 @@ public class GameManager : NetworkBehaviour
         }
         else
         {
-            Destroy(this);
+            Destroy(this.gameObject);
         }
     }
 
@@ -134,7 +133,7 @@ public class GameManager : NetworkBehaviour
 
                 if (_countdownTimer.IsTimerUp())
                 {
-                    _changeStateServerRpc(GameState.Active);
+                    _changeStateServerRpc(GameState.Editing);
                     _countdownTimer.ResetTimer();
                 }
                 break;
@@ -214,7 +213,7 @@ public class GameManager : NetworkBehaviour
         {
             if (State == GameState.Waiting)
             {
-                _changeStateServerRpc(GameState.Countdown);
+                _changeStateServerRpc(GameState.Editing);
                 _triggerOnStartGameEventClientRpc();
             }
 

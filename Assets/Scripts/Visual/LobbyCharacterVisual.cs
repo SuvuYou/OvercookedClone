@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class LobbyCharacterVisual : MonoBehaviour
 {
+    private const string SHADER_COLOR_STRING = "_Color";
+    private const string SHADER_ALPHA_STRING = "_Alpha";
+
     [SerializeField] private MeshRenderer _bodyMesh;
     [SerializeField] private MeshRenderer _headMesh;
 
@@ -14,7 +17,12 @@ public class LobbyCharacterVisual : MonoBehaviour
 
     public void AssignColor(Color newColor)
     {
-        _customMaterial.color = newColor;
+        _customMaterial.SetColor(SHADER_COLOR_STRING, newColor);
+    }
+
+    public void AssignColorAlpha(float newAlpha)
+    {
+        _customMaterial.SetFloat(SHADER_ALPHA_STRING, newAlpha);
     }
 
     private void _initCustomMaterial()

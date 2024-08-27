@@ -7,6 +7,7 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private PlayerStateSO _playerState;
     [SerializeField] private LayerMask _collisionsMask;
     [SerializeField] private List<Vector3> _spawnPositions;
+    [SerializeField] private int _counterLayerNumber;
  
     private float _playerRadius = 0.7f;
     private float _movementSpeed = 10f;
@@ -14,6 +15,9 @@ public class PlayerMovement : NetworkBehaviour
 
     private float _movementInputThreshold = 0.15f;
 
+    public void EnableCountersCollision() => _collisionsMask |= 0x1 << _counterLayerNumber;
+    public void DisableCountersCollision() => _collisionsMask &= ~(0x1 << _counterLayerNumber);
+    
     public override void OnNetworkSpawn()
     {
         if (!IsOwner)
@@ -26,7 +30,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance.State != GameState.Active)
+        if (GameManager.Instance.State != GameState.Active && GameManager.Instance.State != GameState.Editing)
         {
             return;
         }
