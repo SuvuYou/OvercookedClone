@@ -45,10 +45,12 @@ public class CustomerVisual : MonoBehaviour
         {
             _transitionTimer.SubtractTime(Time.deltaTime);
 
-            _setColor(Color.Lerp(_currentColor, _targetColor, TIME_FOR_TRANSITION - _transitionTimer.Time));
+            float currentPercentage = (TIME_FOR_TRANSITION - _transitionTimer.Time) * (1 / TIME_FOR_TRANSITION);
+            _setColor(Color.Lerp(_currentColor, _targetColor, currentPercentage));
 
             if (_transitionTimer.IsTimerUp()) 
             {
+                _transitionTimer.ResetTimer();
                 _isTransitioning = false;
             }
         }
@@ -57,7 +59,6 @@ public class CustomerVisual : MonoBehaviour
     private void _startTransition(Color targetColor)
     {
         _isTransitioning = true;
-        _transitionTimer.ResetTimer();
         _currentColor = _getColor();
         _targetColor = targetColor;
     }

@@ -4,12 +4,18 @@ using UnityEngine;
 
 public class CuttingCounter : BaseCounter
 {
-    [SerializeField] private ProgressTrackerOnNetwork _cuttingProgress;
-
     public event Action OnCut;
+
+    [SerializeField] private ProgressTrackerOnNetwork _cuttingProgress;
+    [SerializeField] private ProgressBarUI _progressBar;
 
     private bool _isCutWithoutSwapping;
     private KitchenItemSO _cachedSlicedItem;
+
+    private void Awake()
+    {
+        _progressBar.Init(progressTracker: _cuttingProgress.ProgressTracker);
+    }
 
     public override void Interact(KitchenItemParent player)
     {        

@@ -52,10 +52,18 @@ PrefabInstance:
       propertyPath: _kitchenItemToSpawn
       value: 
       objectReference: {fileID: 11400000, guid: 0d478821fcdc65345ae8a61e698c896b, type: 2}
+    - target: {fileID: 6179518171513753238, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2249367954
+      objectReference: {fileID: 0}
     - target: {fileID: 7967330315492056962, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
       propertyPath: m_Name
       value: CounterContainer_Cabbage
       objectReference: {fileID: 0}
+    - target: {fileID: 8696452106368318991, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: _purchasableItemReference
+      value: 
+      objectReference: {fileID: 11400000, guid: 36a9cdd834a423f44b6c86ac0feddd6a, type: 2}
     - target: {fileID: 8849699723356035855, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
       propertyPath: m_Sprite
       value: 

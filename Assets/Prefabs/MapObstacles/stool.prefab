@@ -158,7 +158,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 782121484
+  GlobalObjectIdHash: 1443368120
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _itemSpawnPlaceholder: {fileID: 5345300164277994826}
-  _selectedCounter: {fileID: 11400000, guid: 0fda51236e27a0c409e8339a8ca08d33, type: 2}
+  _selectedObjects: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
   _selectedVisualIndicator: {fileID: 5975480286098937535}
   _sittingPlacePosition: {fileID: 8949025186356880093}
 --- !u!65 &1593249039214867868

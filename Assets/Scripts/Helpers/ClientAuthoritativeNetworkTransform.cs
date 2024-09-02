@@ -8,7 +8,7 @@ public class ClientAuthoritativeNetworkTransform : NetworkBehaviour
     private void Update()
     {
         // TODO: interpolate
-        transform.position = _targetPosition;
+        transform.position = new Vector3(_targetPosition.x, transform.position.y, _targetPosition.z);
     }
 
     public void SetTargetPosition(Vector3 target)

@@ -1027,7 +1027,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6623098688898365317, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 2842498156
+      value: 796312926
       objectReference: {fileID: 0}
     - target: {fileID: 6969974179371722385, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: m_Name
@@ -1081,7 +1081,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _itemSpawnPlaceholder: {fileID: 5267475137912912549}
-  _selectedCounter: {fileID: 11400000, guid: 0fda51236e27a0c409e8339a8ca08d33, type: 2}
+  _selectedObjects: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
   _selectedVisualIndicator: {fileID: 4681614791850834977}
 --- !u!1001 &5190564467622540989
 PrefabInstance:

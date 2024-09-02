@@ -74,6 +74,10 @@ PrefabInstance:
       propertyPath: _selectedVisualIndicator
       value: 
       objectReference: {fileID: 6994465913013435071}
+    - target: {fileID: -676675470942173412, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
+      propertyPath: _purchasableItemReference
+      value: 
+      objectReference: {fileID: 11400000, guid: dff2b81444b9d6a41911ea1819e9c63f, type: 2}
     - target: {fileID: 3902124013254628595, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -116,7 +120,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6623098688898365317, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 1064916961
+      value: 2086705651
       objectReference: {fileID: 0}
     - target: {fileID: 6969974179371722385, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: m_Name
@@ -159,7 +163,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _itemSpawnPlaceholder: {fileID: 3044816369533256354}
-  _selectedCounter: {fileID: 11400000, guid: 0fda51236e27a0c409e8339a8ca08d33, type: 2}
+  _selectedObjects: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
   _selectedVisualIndicator: {fileID: 6994465913013435071}
 --- !u!4 &7151018761923652717 stripped
 Transform:

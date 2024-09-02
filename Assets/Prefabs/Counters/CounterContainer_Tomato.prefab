@@ -52,10 +52,18 @@ PrefabInstance:
       propertyPath: _kitchenItemToSpawn
       value: 
       objectReference: {fileID: 11400000, guid: bb74b266f2dbf8e4fad8b01e637948cf, type: 2}
+    - target: {fileID: 6179518171513753238, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1865144157
+      objectReference: {fileID: 0}
     - target: {fileID: 7967330315492056962, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
       propertyPath: m_Name
       value: CounterContainer_Tomato
       objectReference: {fileID: 0}
+    - target: {fileID: 8696452106368318991, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: _purchasableItemReference
+      value: 
+      objectReference: {fileID: 11400000, guid: beec667e5f36b8a4082360dd1ee2ad5f, type: 2}
     - target: {fileID: 8849699723356035855, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
       propertyPath: m_Sprite
       value: 

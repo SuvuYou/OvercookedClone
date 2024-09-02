@@ -37,7 +37,8 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<GameState> _state = new (value: GameState.Waiting);
     public GameState State { get { return _state.Value; } }
 
-    private float _balance;
+    private NetworkVariable<float> _balance = new();
+    public float Balance { get => _balance.Value; }
 
     private TimingTimer _countdownTimer = new (defaultTimerValue: 3f);
     public bool IsPaused { get; private set; } = false;
@@ -53,6 +54,7 @@ public class GameManager : NetworkBehaviour
         {
             Instance = this;
             Plate.InitAllowedIngridients(_allowedIngredients);
+            _balance.OnValueChanged += (float prevValue, float newValue) => OnBalanceUpdated?.Invoke(newValue);
         }
         else
         {
@@ -110,7 +112,6 @@ public class GameManager : NetworkBehaviour
         playerNetworkObject.SpawnAsPlayerObject(clientId, destroyWithScene: true);
 
         _setCameraTargetClientRpc(clientId, playerNetworkObject);
-        _setBalanceClientRpc(_balance, senderClientId: NetworkManager.Singleton.LocalClientId);
     }
 
     public override void OnNetworkDespawn()
@@ -123,7 +124,7 @@ public class GameManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        switch(_state.Value)
+        switch(State)
         {
             case GameState.Waiting:
                 break;
@@ -270,30 +271,11 @@ public class GameManager : NetworkBehaviour
 
     public void UpdateBalance(float increase = 0, float decrease = 0)
     {
-        float newBalance = _balance + increase - decrease;
+        float balanceDifference = increase - decrease;
 
-        _setBalanceLocally(newBalance);
-        // _setBalanceServerRpc(newBalance);
+        _setBalanceServerRpc(balanceDifference);
     }  
 
-    private void _setBalanceLocally(float newBalance)
-    {
-        _balance = newBalance;
-        OnBalanceUpdated?.Invoke(newBalance);
-    }   
-
-    // TODO: maybe remove
     [ServerRpc(RequireOwnership = false)]
-    private void _setBalanceServerRpc(float newBalance, ServerRpcParams rpcParams = default)
-    {
-        _setBalanceClientRpc(newBalance, senderClientId: rpcParams.Receive.SenderClientId);
-    }   
-
-    [ClientRpc]
-    private void _setBalanceClientRpc(float newBalance, ulong senderClientId)
-    {
-        if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
-
-        _balance = newBalance;
-    }
+    private void _setBalanceServerRpc(float balanceDifference) => _balance.Value += balanceDifference;
 }

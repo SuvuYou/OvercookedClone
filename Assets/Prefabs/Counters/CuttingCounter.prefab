@@ -117,7 +117,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dee0a4845ff4e824ba091b40f237ce7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _progress: {fileID: 0}
   _progressBar: {fileID: 3676560023289848948}
 --- !u!114 &8551921083744822927
 MonoBehaviour:
@@ -310,6 +309,10 @@ PrefabInstance:
       propertyPath: _selectedVisualIndicator
       value: 
       objectReference: {fileID: 4906663426343005932}
+    - target: {fileID: -676675470942173412, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
+      propertyPath: _purchasableItemReference
+      value: 
+      objectReference: {fileID: 11400000, guid: 7373c853a5991dd409b11b3c6605699b, type: 2}
     - target: {fileID: 3902124013254628595, guid: 2efab77af8eac3b46af78552640fe4aa, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -406,9 +409,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _itemSpawnPlaceholder: {fileID: 7872338671297856400}
-  _selectedCounter: {fileID: 11400000, guid: 0fda51236e27a0c409e8339a8ca08d33, type: 2}
+  _selectedObjects: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
   _selectedVisualIndicator: {fileID: 4906663426343005932}
   _cuttingProgress: {fileID: 3928273095535201231}
+  _progressBar: {fileID: 3172242577839017738}
 --- !u!114 &3928273095535201231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -421,7 +425,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e7b60c36d5c5d64ca8966daeb8d8d54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _progressTracker: {fileID: 11400000, guid: 795f0585a77ee3f459151faac58248ea, type: 2}
 --- !u!1001 &3190008617492830918
 PrefabInstance:
   m_ObjectHideFlags: 0

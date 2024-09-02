@@ -14,23 +14,23 @@ public class ProgressTracker
         MaxProgress = maxProgress;
         Progress = 0;
     }
+
+    public void SetMaxProgress (float maxProgress) => MaxProgress = maxProgress;
     
     public void TriggerProgressUpdate(float newProgress)
     {
         Progress = newProgress;
 
-        ProgressNormalized = _normalizeProgress(currentProgress: newProgress, maxProgress: MaxProgress);
+        ProgressNormalized = _normalizeProgress(currentProgress: newProgress);
         ProgressNormalized = _applyBoundaries(subjectNumber: ProgressNormalized);
 
         OnUpdateProgress?.Invoke(ProgressNormalized);
     }
 
-    public void SetMaxProgress (float maxProgress) => MaxProgress = maxProgress;
-
-    private float _normalizeProgress(float currentProgress, float maxProgress)
+    private float _normalizeProgress(float currentProgress)
     {
-        if (maxProgress == 0) return 0;
-        else return currentProgress / maxProgress;
+        if (MaxProgress == 0) return 0;
+        else return currentProgress / MaxProgress;
     }
 
     private float _applyBoundaries(float subjectNumber, float lowerBoundary = 0, float upperBoundary = 1)

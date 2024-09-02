@@ -4,41 +4,44 @@ using UnityEngine;
 // TODO: generate default map counters using code
 public class EditableItem : NetworkBehaviour
 {
-    [SerializeField] private SelectedEditableItemSO _selectedEditableSubject;
+    [SerializeField] private PurchasableItemSO _purchasableItemReference;
+    public PurchasableItemSO PurchasableItemReference { get => _purchasableItemReference; } 
+
+    [SerializeField] private SelectedObjectsInRangeSO _selectedObjectsInRange;
     [SerializeField] private GameObject _selectedVisualIndicator;
     [SerializeField] private ClientAuthoritativeNetworkTransform _networkTransform;
 
     private Vector2Int _parentTileCoordinats;
-    private Vector2Int _defaultCoords;
+    private Vector2Int _defaultCoords = new (-1, -1);
 
     private ulong _defaultEditorClientId = 999;
     private ulong _currentEditorClientId;
 
-    private void Start()
+    private void Awake()
     {
         _currentEditorClientId = _defaultEditorClientId;
 
-        _selectedEditableSubject.OnSelectSubject += _checkIsCounterSelected;
-        _selectedEditableSubject.OnSelectTile += _updateTransformPosition;
+        _selectedObjectsInRange.OnSelectSubject += _checkIsItemSelected;
+        _selectedObjectsInRange.OnSelectTile += _updateTransformPosition;
 
-        _selectedEditableSubject.OnStartEditing += _startEditing;
-        _selectedEditableSubject.OnEndEditing += _endEditing;
+        _selectedObjectsInRange.OnStartEditing += _startEditing;
+        _selectedObjectsInRange.OnEndEditing += _endEditing;
     }
 
     public override void OnDestroy()
     {
         base.OnDestroy();
     
-        _selectedEditableSubject.OnSelectSubject -= _checkIsCounterSelected;
-        _selectedEditableSubject.OnSelectTile -= _updateTransformPosition;
+        _selectedObjectsInRange.OnSelectSubject -= _checkIsItemSelected;
+        _selectedObjectsInRange.OnSelectTile -= _updateTransformPosition;
 
-        _selectedEditableSubject.OnStartEditing -= _startEditing;
-        _selectedEditableSubject.OnEndEditing -= _endEditing;
+        _selectedObjectsInRange.OnStartEditing -= _startEditing;
+        _selectedObjectsInRange.OnEndEditing -= _endEditing;
     }
 
     private void _startEditing()
     {
-        if (_selectedEditableSubject.SelectedEditingSubject != this) return;
+        if (_selectedObjectsInRange.SelectedEditingSubject != this) return;
 
         _setCurrentEditor(editorClientId: NetworkManager.Singleton.LocalClientId);
         _assignCoordinats(_defaultCoords);
@@ -46,34 +49,29 @@ public class EditableItem : NetworkBehaviour
 
     private void _endEditing()
     {
-        if (_selectedEditableSubject.SelectedEditingSubject != this) return;
+        if (_selectedObjectsInRange.SelectedEditingSubject != this) return;
 
         _setCurrentEditor(editorClientId: _defaultEditorClientId);
-        _assignCoordinats(_selectedEditableSubject.SelectedGridTile.Coordinats);
-        _updateTransformPosition(_selectedEditableSubject.SelectedGridTile);  
+        _assignCoordinats(_selectedObjectsInRange.SelectedGridTile?.Coordinats ?? _defaultCoords);
+        _updateTransformPosition(_selectedObjectsInRange.SelectedGridTile);  
     }
 
-    public void Interact(PlayerController player) 
+    public void Interact() 
     { 
         if (_currentEditorClientId == _defaultEditorClientId)
         {
-            _selectedEditableSubject.TriggerOnStartEditing();
+            _selectedObjectsInRange.TriggerOnStartEditing();
             
             return;
         }
 
         if (_currentEditorClientId != NetworkManager.Singleton.LocalClientId) return;
 
-        // if (isTryingToSell)
-        // {
-        //      destroy + update balance
+        if (_selectedObjectsInRange.SelectedShop != null) return;
 
-        //     return;
-        // }
-
-        if (_selectedEditableSubject.SelectedGridTile == null || !_selectedEditableSubject.SelectedGridTile.IsAvailable()) return;
+        if (_selectedObjectsInRange.SelectedGridTile == null || !_selectedObjectsInRange.SelectedGridTile.IsAvailable()) return;
         
-        _selectedEditableSubject.TriggerOnEndEditing();
+        _selectedObjectsInRange.TriggerOnEndEditing();
     }
 
     private void _assignCoordinats(Vector2Int coords)
@@ -142,9 +140,9 @@ public class EditableItem : NetworkBehaviour
         _currentEditorClientId = editorClientId;
     }
 
-    private void _checkIsCounterSelected(EditableItem newSelectedSubject)
+    private void _checkIsItemSelected(EditableItem newSelectedSubject)
     {
-        if (_selectedVisualIndicator != null) _selectedVisualIndicator.SetActive(newSelectedSubject == this);
+        _selectedVisualIndicator.SetActive(newSelectedSubject == this);
     }
 
     private void _updateTransformPosition(GridTile newSelectedTile)

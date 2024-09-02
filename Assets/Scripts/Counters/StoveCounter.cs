@@ -16,6 +16,12 @@ public class StoveCounter : BaseCounter
 
     private NetworkVariable<FryingState> _state = new();
     [SerializeField] private ProgressTrackerOnNetwork _fryingProgress;
+    [SerializeField] private ProgressBarUI _progressBar;
+
+    private void Awake()
+    {
+        _progressBar.Init(progressTracker: _fryingProgress.ProgressTracker);
+    }
 
     private void Update ()
     {
@@ -70,7 +76,7 @@ public class StoveCounter : BaseCounter
             return;
         }
 
-        _fryingProgress.EnableContiniousProgressUpdate(progressRate: Time.deltaTime);
+        _fryingProgress.EnableContiniousProgressUpdate();
 
         if (_fryingProgress.Progress >= _fryingProgress.MaxProgress)
         {

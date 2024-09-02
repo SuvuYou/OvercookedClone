@@ -9,7 +9,7 @@ public class TileMapGrid : NetworkBehaviour
 
     [SerializeField] private Vector2Int _size;
     [SerializeField] private GridTile _tilePrefab;
-    [SerializeField] private SelectedEditableItemSO _selectedEditableItem;
+    [SerializeField] private SelectedObjectsInRangeSO _selectedObjectsInRange;
 
     private Dictionary<Vector2Int, bool> _availableTilesGrid = new();
 
@@ -33,8 +33,8 @@ public class TileMapGrid : NetworkBehaviour
 
     private void Start()
     {
-        _selectedEditableItem.OnStartEditing += () => _setIndicators(true);
-        _selectedEditableItem.OnEndEditing += () => _setIndicators(false);
+        _selectedObjectsInRange.OnStartEditing += () => _setIndicators(true);
+        _selectedObjectsInRange.OnEndEditing += () => _setIndicators(false);
     }
 
     public bool IsPlaceAvailable(Vector2Int coords) => _availableTilesGrid[coords];

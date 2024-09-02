@@ -52,10 +52,18 @@ PrefabInstance:
       propertyPath: _kitchenItemToSpawn
       value: 
       objectReference: {fileID: 11400000, guid: 987aa30f5fae8244f891c75d5be61a1e, type: 2}
+    - target: {fileID: 6179518171513753238, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2710057513
+      objectReference: {fileID: 0}
     - target: {fileID: 7967330315492056962, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
       propertyPath: m_Name
       value: CounterContainer_CheeseBlock
       objectReference: {fileID: 0}
+    - target: {fileID: 8696452106368318991, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: _purchasableItemReference
+      value: 
+      objectReference: {fileID: 11400000, guid: 4f45ebac7bdc66344a9a9fe56278b583, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

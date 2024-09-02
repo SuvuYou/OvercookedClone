@@ -52,10 +52,18 @@ PrefabInstance:
       propertyPath: _kitchenItemToSpawn
       value: 
       objectReference: {fileID: 11400000, guid: 112795674ce95e6499dfebe47333ab68, type: 2}
+    - target: {fileID: 6179518171513753238, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 370499450
+      objectReference: {fileID: 0}
     - target: {fileID: 7967330315492056962, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
       propertyPath: m_Name
       value: CounterContainer_MeatPattyUncooked
       objectReference: {fileID: 0}
+    - target: {fileID: 8696452106368318991, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
+      propertyPath: _purchasableItemReference
+      value: 
+      objectReference: {fileID: 11400000, guid: 21ac4e14b11bab241b1fe67ce9ac635a, type: 2}
     - target: {fileID: 8849699723356035855, guid: d6ad520e394a71441b8132c7ff7dafe9, type: 3}
       propertyPath: m_Sprite
       value: 

@@ -4,10 +4,9 @@ using UnityEngine;
 public class PlayerController : KitchenItemParent
 {
     [SerializeField] private PlayerStateSO _playerState;
-    [SerializeField] private SelectedCounterSO _selectedCounter;
-    [SerializeField] private SelectedEditableItemSO _selectedEditableItem;
+    [SerializeField] private SelectedObjectsInRangeSO _selectedObjectsInRange;
 
-    private float _raycastDistance = 2f;
+    private const float DEFAULT_RAYCAST_RADIUS = 2f;
 
     public override void OnNetworkSpawn()
     {
@@ -18,18 +17,25 @@ public class PlayerController : KitchenItemParent
             var playerMovementComponent = GetComponent<PlayerMovement>();
             var networkCharacterVisualComponent = GetComponent<NetworkCharacterVisual>();
 
-            PlayerInput.Instance.OnInteract += () => _selectedCounter.SelectedCounter?.Interact(this);
-            PlayerInput.Instance.OnInteractAlternative += () => _selectedCounter.SelectedCounter?.InteractAlternative(this);
-            PlayerInput.Instance.OnInteractDuringEditing += () => _selectedEditableItem.SelectedEditingSubject?.Interact(this);
+            PlayerInput.Instance.OnInteract += () => _selectedObjectsInRange.SelectedCounter?.Interact(this);
+            PlayerInput.Instance.OnInteractAlternative += () => _selectedObjectsInRange.SelectedCounter?.InteractAlternative(this);
+            PlayerInput.Instance.OnInteractDuringEditing += () => 
+            {
+                if (_selectedObjectsInRange != null && _selectedObjectsInRange.SelectedEditingSubject != null)
+                {
+                    _selectedObjectsInRange.SelectedEditingSubject?.Interact();
+                }
+            };
+            PlayerInput.Instance.OnInteractDuringEditing += () => _selectedObjectsInRange.SelectedShop?.Interact();
             GameManager.Instance.OnStateChange += _clearSelectedItems;
 
-            _selectedEditableItem.OnStartEditing += () => 
+            _selectedObjectsInRange.OnStartEditing += () => 
             {
                 playerMovementComponent.DisableCountersCollision();
                 networkCharacterVisualComponent.RenderTransparent();
             };
 
-            _selectedEditableItem.OnEndEditing += () => 
+            _selectedObjectsInRange.OnEndEditing += () => 
             {
                 playerMovementComponent.EnableCountersCollision();
                 networkCharacterVisualComponent.RenderFilled();
@@ -63,38 +69,61 @@ public class PlayerController : KitchenItemParent
 
         if (_playerState.IsWalking) 
         {
-            if (GameManager.Instance.State == GameState.Active) _handleSelectCounter();
-            if (GameManager.Instance.State == GameState.Editing) _handleSelectEditableObject(); _handleSelectClosestTile();
+            if (GameManager.Instance.State == GameState.Active) 
+            {
+                var colliders = _raycastSphere();
+                _handleSelectCounter(colliders);
+            }
+
+            if (GameManager.Instance.State == GameState.Editing) 
+            {
+                _handleSelectEditableObject(_raycastSphere()); 
+                _handleSelectClosestTile(_raycastSphere(raycastOffset: transform.forward * 4));
+                _handleSelectShop(_raycastSphere(raycastOffset: transform.forward * 1, raycastRadius: 0.25f));
+            }
         }
     }
 
     private void _clearSelectedItems(GameState _)
     {
-        _selectedCounter.TriggerSelectCounterEvent(null);
-        _selectedEditableItem.TriggerSelectEditingSubject(null);
+        _selectedObjectsInRange.TriggerSelectCounter(null);
+        _selectedObjectsInRange.TriggerSelectEditingSubject(null);
+        _selectedObjectsInRange.TriggerSelectShop(null);
     }
 
-    private void _handleSelectCounter()
+    private void _handleSelectCounter(Collider[] colliders)
     {
-        BaseCounter closestCounter = _getClosestObject<BaseCounter>();
-        _selectedCounter.TriggerSelectCounterEvent(closestCounter);
+        BaseCounter closestCounter = _getClosestObject<BaseCounter>(colliders);
+        _selectedObjectsInRange.TriggerSelectCounter(closestCounter);
     }
 
-    private void _handleSelectEditableObject()
+    private void _handleSelectEditableObject(Collider[] colliders)
     {
-        EditableItem closestEditableItem = _getClosestObject<EditableItem>();
-        _selectedEditableItem.TriggerSelectEditingSubject(closestEditableItem);
+        EditableItem closestEditableItem = _getClosestObject<EditableItem>(colliders);
+        _selectedObjectsInRange.TriggerSelectEditingSubject(closestEditableItem);
+    }
+
+    private void _handleSelectShop(Collider[] colliders)
+    {
+        Shop closestShop = _getClosestObject<Shop>(colliders);
+        _selectedObjectsInRange.TriggerSelectShop(closestShop);
     }
         
-    private void _handleSelectClosestTile()
+    private void _handleSelectClosestTile(Collider[] colliders)
     {
-        GridTile closestTile = _getClosestObject<GridTile>(raycastOffset: transform.forward * 4);
-        _selectedEditableItem.TriggerSelectGridTile(closestTile);
+        GridTile closestTile = _getClosestObject<GridTile>(colliders);
+        _selectedObjectsInRange.TriggerSelectGridTile(closestTile);
     }
 
-    private T _getClosestObject<T>(Vector3 raycastOffset = default)
+    private Collider[] _raycastSphere(Vector3 raycastOffset = default, float raycastRadius = DEFAULT_RAYCAST_RADIUS)
     {
-        Collider[] colliders = Physics.OverlapSphere(transform.position + raycastOffset, _raycastDistance);
+        Collider[] colliders = Physics.OverlapSphere(transform.position + raycastOffset, raycastRadius);
+
+        return colliders;
+    }
+
+    private T _getClosestObject<T>(Collider[] colliders)
+    {
         T closestObject = default(T);
         float closestDistance = float.MaxValue;
 

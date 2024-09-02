@@ -9,6 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2d23caa33c86844094128b2eff0d8c7, type: 3}
-  m_Name: SelectedCounterSO
+  m_Script: {fileID: 11500000, guid: 033e1bbdc770be14aaf04360d89020ff, type: 3}
+  m_Name: TrashBinSO
   m_EditorClassIdentifier: 
+  ItemPrefab: {fileID: 2558417932930072450, guid: 24856919b99b0084f976f9ccdb941602, type: 3}
+  Price: 1000
+  ShopSpriteImage: {fileID: 21300000, guid: bf49b7af465d8c7468481a7c919c46d5, type: 3}

@@ -3,18 +3,26 @@ using UnityEngine.UI;
 
 public class ProgressBarUI : MonoBehaviour
 {
-    [SerializeField] private ProgressTrackerSO _progress;
     [SerializeField] private Image _progressBar;
+
+    private ProgressTracker _progressTracker;
 
     private void Start()
     {
-        _progress.OnUpdateProgress += _updateProgressBar;
         _hide();
     }
 
     private void OnDestroy()
     {
-        _progress.OnUpdateProgress -= _updateProgressBar;
+        if (_progressTracker == null) return;
+
+        _progressTracker.OnUpdateProgress -= _updateProgressBar;
+    }
+
+    public void Init(ProgressTracker progressTracker)
+    {
+        _progressTracker = progressTracker;
+        _progressTracker.OnUpdateProgress += _updateProgressBar;
     }
 
     protected virtual void _updateProgressBar(float progressNormalized)

@@ -85,7 +85,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3103553623
+  GlobalObjectIdHash: 3106160527
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -129,8 +129,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _itemSpawnPlaceholder: {fileID: 7707701049297722432}
   _playerState: {fileID: 11400000, guid: f90f5a907d73eca4e9503b6272880b80, type: 2}
-  _selectedCounter: {fileID: 11400000, guid: 0fda51236e27a0c409e8339a8ca08d33, type: 2}
-  _selectedEditableItem: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
+  _selectedObjectsInRange: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
 --- !u!114 &3709146948679809799
 MonoBehaviour:
   m_ObjectHideFlags: 0
