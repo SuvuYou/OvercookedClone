@@ -11,10 +11,13 @@ public class GameData
     // coordicats of placed items are keys and integers are indecies in list of AvailablePurchasableItems 
     public Dictionary<Vector2Int, int> MapItems;
 
-    public GameData()
+    public GameData(Dictionary<Vector2Int, int> defaultMapItems = default)
     {
         Balance = 0f;
-        MapItems = new();
+
+        if (defaultMapItems != default)
+            MapItems = new(defaultMapItems);
+        else    
+            MapItems = new();
     }
 }
-

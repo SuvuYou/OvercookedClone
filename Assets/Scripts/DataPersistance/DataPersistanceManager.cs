@@ -1,13 +1,14 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DataPersistanceManager : MonoBehaviour
 {
     public static DataPersistanceManager Instance;
 
-    [SerializeField]
-    private string _saveFileName;
+    [SerializeField] private string _saveFileName;
+    [SerializeField] private SerializableDictionary DEFAULT_MAP_ITEMS;
+    [SerializeField] private AvailablePurchasableItemsSO _availablePurchasableItemsSO;
 
     private FileDataHandler _dataHandler;
 
@@ -37,7 +38,11 @@ public class DataPersistanceManager : MonoBehaviour
 
     public void NewGame()
     {
-        Data = new GameData();
+        var mapItems = new Dictionary<Vector2Int, int>();
+
+        foreach (var pair in DEFAULT_MAP_ITEMS.ToDictionary()) mapItems.Add(pair.Key, _availablePurchasableItemsSO.GetIndexByEditableItem(pair.Value));
+        
+        Data = new GameData(mapItems);
     }
 
     public void SaveData()
@@ -49,9 +54,10 @@ public class DataPersistanceManager : MonoBehaviour
     public void LoadData()
     {
         Data = _dataHandler.Load();
-        OnLoadGameData?.Invoke(Data);
 
         if (Data == null) NewGame();
+
+        OnLoadGameData?.Invoke(Data);
     } 
 
     private void _modifyGameData(GameData newData) => Data = newData;

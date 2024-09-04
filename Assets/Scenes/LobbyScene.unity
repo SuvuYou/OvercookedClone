@@ -204,6 +204,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _saveFileName: save.json
+  DEFAULT_MAP_ITEMS:
+    keyValuePairs:
+    - Key: {x: 3, y: 2}
+      Value: {fileID: 2558417932930072450, guid: 24856919b99b0084f976f9ccdb941602, type: 3}
+    - Key: {x: 3, y: 3}
+      Value: {fileID: 2300073509055970339, guid: 9162d1b6b4a14a842bccf9c9f1eb74cb, type: 3}
+    - Key: {x: 8, y: 3}
+      Value: {fileID: 881430298267299200, guid: cc0f515cb7c7ac242993bdc1b2c4095e, type: 3}
+    - Key: {x: 5, y: 5}
+      Value: {fileID: 7241829547545312944, guid: 32ce90df37760bb4a951e9a2c1d06a9c, type: 3}
+    - Key: {x: 3, y: 4}
+      Value: {fileID: 459087401905116746, guid: 562fb875c56f80a47986dbe924257449, type: 3}
+    - Key: {x: 6, y: 5}
+      Value: {fileID: 7253499642852355305, guid: c9917547678a32a418453d0af5e08829, type: 3}
+    - Key: {x: 8, y: 4}
+      Value: {fileID: 4491217614071027178, guid: 251e5952f9ba6ef468d8588690d65d57, type: 3}
+    - Key: {x: 3, y: 5}
+      Value: {fileID: 8696452106368318991, guid: fd02c07403f6d4e4e8f93300da31184e, type: 3}
+    - Key: {x: 4, y: 5}
+      Value: {fileID: 8696452106368318991, guid: fd02c07403f6d4e4e8f93300da31184e, type: 3}
+    - Key: {x: 7, y: 5}
+      Value: {fileID: 8696452106368318991, guid: fd02c07403f6d4e4e8f93300da31184e, type: 3}
+    - Key: {x: 8, y: 5}
+      Value: {fileID: 8696452106368318991, guid: fd02c07403f6d4e4e8f93300da31184e, type: 3}
+  _availablePurchasableItemsSO: {fileID: 11400000, guid: fc69690723861cb4f85950cc4737b922, type: 2}
 --- !u!4 &25409496
 Transform:
   m_ObjectHideFlags: 0
