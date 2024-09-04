@@ -9,6 +9,7 @@ public class Shop : NetworkBehaviour
     [SerializeField] private AvailablePurchasableItemsSO _availablePurchasableItems;
     [SerializeField] private SelectedObjectsInRangeSO _selectedObjectsInRange;
     [SerializeField] private GameObject _selectedVisualIndicator;
+    [SerializeField] private GridTile _spawnTile;
 
     private void Start()
     {
@@ -24,21 +25,20 @@ public class Shop : NetworkBehaviour
 
     public void CreateItem(PurchasableItemSO item)
     {
-        var itemIndex = _availablePurchasableItems.GetPurchasableItemIndex(item);
-        if (itemIndex != -1 && GameManager.Instance.Balance > item.Price) _spawnItemServerRpc(itemIndex);
+        var itemIndex = _availablePurchasableItems.GetIndexByPurchasableItemSO(item);
+        // if (itemIndex != -1 && GameManager.Instance.Balance > item.Price) 
+        _spawnItemServerRpc(itemIndex);
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void _spawnItemServerRpc(int itemIndex, ServerRpcParams rpcParams = default)
     {
         var purchasedItem = _availablePurchasableItems.AvailablePurchasableItems[itemIndex];
-        var createItem = Instantiate(purchasedItem.ItemPrefab, this.gameObject.transform);
-        var networkObject = createItem.GetComponent<NetworkObject>();
-        networkObject.Spawn();
+        var createdItem = TileMapGrid.Instance.SpawnMapItem(purchasedItem.ItemPrefab, _spawnTile);
 
         GameManager.Instance.UpdateBalance(decrease: purchasedItem.Price);
         
-        _selectItemToEditClientRpc(senderClientId: rpcParams.Receive.SenderClientId, obj: networkObject);
+        _selectItemToEditClientRpc(senderClientId: rpcParams.Receive.SenderClientId, obj: createdItem.GetComponent<NetworkObject>());
     }
 
     [ClientRpc]

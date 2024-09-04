@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,13 +9,10 @@ public class TileMapGrid : NetworkBehaviour
     public static TileMapGrid Instance;
 
     [SerializeField] private Vector2Int _size;
-    [SerializeField] private GridTile _tilePrefab;
     [SerializeField] private SelectedObjectsInRangeSO _selectedObjectsInRange;
+    [SerializeField] private AvailablePurchasableItemsSO _availablePurchasableItems;
 
-    private Dictionary<Vector2Int, bool> _availableTilesGrid = new();
-
-    private List<GridTile> _tiles = new();
-    private List<Vector2Int> _coordinats = new();
+    private TileMapGridData _gridData = new();
 
     private void Awake()
     {
@@ -27,83 +25,121 @@ public class TileMapGrid : NetworkBehaviour
  
         Instance = this;
 
-        _initTileCoordinats();
-        _assignTiles();
+        _gridData.InitTiles(tilesHolderTransform: transform, size: _size);
     }
-
+    
     private void Start()
     {
-        _selectedObjectsInRange.OnStartEditing += () => _setIndicators(true);
-        _selectedObjectsInRange.OnEndEditing += () => _setIndicators(false);
+        _selectedObjectsInRange.OnStartEditing += () => _gridData.SetIndicators(isVisible: true);
+        _selectedObjectsInRange.OnEndEditing += () => _gridData.SetIndicators(isVisible: false);
     }
 
-    public bool IsPlaceAvailable(Vector2Int coords) => _availableTilesGrid[coords];
-
-    public void TakeTile(Vector2Int coords) => _setTileAvailability(coords, availability: false);
-       
-    public void FreeTile(Vector2Int coords) => _setTileAvailability(coords, availability: true);
-
-    private void _setTileAvailability(Vector2Int coords, bool availability)
+    public override void OnNetworkSpawn()
     {
-        _setTileAvailabilityServerRpc(coords.x, coords.y, availability);
-        _setTileAvailabilityLocally(coords, availability);
+        if (!IsServer) return;
+        
+        DataPersistanceManager.Instance.OnLoadGameData += _loadMapFromSaveFile;
+        DataPersistanceManager.Instance.OnSaveGameData += _saveMapToSaveFile;
+    }
+
+    private void _loadMapFromSaveFile(GameData data) 
+    {
+        foreach (var item in _gridData.PlacedItemsByCoordinats.Values.ToList()) Destroy(item.gameObject); 
+
+        _gridData.ClearMap();
+
+        foreach (var item in data.MapItems)
+        {
+            var prefab = _availablePurchasableItems.AvailablePurchasableItems[item.Value].ItemPrefab;
+            var createdItem = SpawnMapItem(prefab, _gridData.TilesByCoordinats[item.Key]);
+            createdItem.AssignCoordinats(item.Key);
+        }
+    }
+
+    private void _saveMapToSaveFile(GameData data, Action<GameData> saveData) 
+    {
+        Dictionary<Vector2Int, int> placedItemsIndeciesByCoordinats = new();
+
+        foreach (var coords in _gridData.PlacedItemsByCoordinats)
+        {
+            placedItemsIndeciesByCoordinats[coords.Key] = _availablePurchasableItems.GetIndexByEditableItem(coords.Value);
+        }
+
+        data.MapItems = placedItemsIndeciesByCoordinats;
+        saveData(data);
+    }
+
+    public EditableItem SpawnMapItem(EditableItem itemToSpawn, GridTile tile)
+    {
+        if (!IsServer) return null;
+
+        var createdItem = Instantiate(itemToSpawn, tile.GetPlacePosition(), Quaternion.identity);
+        var networkObject = createdItem.GetComponent<NetworkObject>();
+        networkObject.Spawn();
+
+        return createdItem;
+    }
+
+    public void AddItemToGrid(Vector2Int coords, EditableItem item)
+    {
+        if (!_gridData.TilesByCoordinats[coords].IsAvailable()) return;
+
+        SetTileData(coords, item);
+    }
+    
+    public void RemoveItemFormGrid(Vector2Int coords) => SetTileData(coords, editableItem: null);
+    
+    public bool IsTileAvailable(Vector2Int coords) => _gridData.IsTileAvailable(coords);
+
+    public GridTile GetTileByCoordinats(Vector2Int coords) => _gridData.TilesByCoordinats[coords];
+    
+    public void SetTileData(Vector2Int coords, EditableItem editableItem)
+    {
+        if (editableItem && editableItem.TryGetComponent(out NetworkObject netObj))
+        {
+            _setTileDataServerRpc(coords.x, coords.y, netObjRef: netObj);
+        }
+        else
+        {
+            _setTileDataServerRpc(coords.x, coords.y);
+        }
+        
+        _setTileDataLocally(coords, editableItem);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void _setTileAvailabilityServerRpc(int x, int y, bool availability, ServerRpcParams rpcParams = default)
+    private void _setTileDataServerRpc(int x, int y, NetworkObjectReference netObjRef, ServerRpcParams rpcParams = default)
     {
-        _setTileAvailabilityClientRpc(x, y, availability, senderClientId: rpcParams.Receive.SenderClientId);
+        _setTileDataClientRpc(x, y, netObjRef, senderClientId: rpcParams.Receive.SenderClientId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _setTileDataServerRpc(int x, int y, ServerRpcParams rpcParams = default)
+    {
+        _setTileDataClientRpc(x, y, senderClientId: rpcParams.Receive.SenderClientId);
     }
 
     [ClientRpc]
-    private void _setTileAvailabilityClientRpc(int x, int y, bool availability, ulong senderClientId)
+    private void _setTileDataClientRpc(int x, int y, NetworkObjectReference netObjRef, ulong senderClientId)
     {
         if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
 
-        _setTileAvailabilityLocally(coords: new (x, y), availability: availability);
-    }
-
-    private void _setTileAvailabilityLocally(Vector2Int coords, bool availability)
-    {
-        _availableTilesGrid[coords] = availability;
-    }
-
-    private void _setIndicators(bool isVisible) => _iterateTiles((GridTile tile) => tile.SetIsIndicatorVisible(isVisible));
-
-    private void _iterateTiles(Action<GridTile> func)
-    {
-        foreach(var tile in _tiles)
+        if (netObjRef.TryGet(out NetworkObject netObj) && netObj.TryGetComponent(out EditableItem editableItem))
         {
-            func(tile);
-        }
-    } 
-    
-    private void _assignTiles()
-    {
-        int childIndex = 0;
-        foreach (Transform child in transform)
-        {
-            if (child.TryGetComponent(out GridTile tile))
-            {
-                var coords = _coordinats[childIndex];
-
-                tile.InitCoordinats(coords);
-                _tiles.Add(tile);
-                _availableTilesGrid[coords] = true;
-                
-                childIndex++;
-            }
+            _setTileDataLocally(coords: new (x, y), editableItem: editableItem);
         }
     }
 
-    private void _initTileCoordinats()
+    [ClientRpc]
+    private void _setTileDataClientRpc(int x, int y, ulong senderClientId)
     {
-        for (int i = 0; i < _size.x; i++)
-        {
-            for (int j = 0; j < _size.y; j++)
-            {
-                _coordinats.Add(new (i, j));
-            }
-        }
+        if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
+
+        _setTileDataLocally(coords: new (x, y), editableItem: null);
+    }
+
+    private void _setTileDataLocally(Vector2Int coords, EditableItem editableItem)
+    {
+        _gridData.SetLocalTileData(coords, editableItem);
     }
 }    

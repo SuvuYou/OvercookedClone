@@ -5,6 +5,11 @@ public class ClientAuthoritativeNetworkTransform : NetworkBehaviour
 {
     private Vector3 _targetPosition;
 
+    private void Awake()
+    {
+        _targetPosition = transform.position;
+    }
+
     private void Update()
     {
         // TODO: interpolate
@@ -13,7 +18,7 @@ public class ClientAuthoritativeNetworkTransform : NetworkBehaviour
 
     public void SetTargetPosition(Vector3 target)
     {
-        _setTargetPosition(target.x, target.z);
+        _setTargetPositionLocally(target.x, target.z);
         _setTargetPositionServerRpc(target.x, target.z);
     }
 
@@ -28,10 +33,10 @@ public class ClientAuthoritativeNetworkTransform : NetworkBehaviour
     {
         if (NetworkManager.Singleton.LocalClientId == senderClientId) return;
 
-        _setTargetPosition(x, z);
+        _setTargetPositionLocally(x, z);
     }
 
-    private void _setTargetPosition(float x, float z)
+    private void _setTargetPositionLocally(float x, float z)
     {
         _targetPosition.x = x;
         _targetPosition.z = z;

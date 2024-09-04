@@ -5,7 +5,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 // TODO LIST:
-// Editing
 // Day cycles
 // Save mechanism
 // Challange
@@ -55,6 +54,10 @@ public class GameManager : NetworkBehaviour
             Instance = this;
             Plate.InitAllowedIngridients(_allowedIngredients);
             _balance.OnValueChanged += (float prevValue, float newValue) => OnBalanceUpdated?.Invoke(newValue);
+            DataPersistanceManager.Instance.OnSaveGameData += (GameData currentData, Action<GameData> saveData) => 
+            {
+                currentData.Balance = Balance; saveData(currentData);
+            };
         }
         else
         {
@@ -83,6 +86,8 @@ public class GameManager : NetworkBehaviour
                 _playersPauseStatus[disconnectedClientId] = false;
                 _setIsGamePausedClientRpc(_arePlayersPaused());
             };
+
+            DataPersistanceManager.Instance.OnLoadGameData += (GameData data) => _balance.Value = data.Balance;
         }
     }
 
@@ -103,6 +108,8 @@ public class GameManager : NetworkBehaviour
         {
             _spawnPlayer(clientId);
         }
+
+        DataPersistanceManager.Instance.LoadData();  
     }
 
     private void _spawnPlayer(ulong clientId)

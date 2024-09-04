@@ -31,7 +31,7 @@ public class GridTile : MonoBehaviour
     
     public Vector3 GetPlacePosition() => _placeholder.position;
 
-    public bool IsAvailable() => TileMapGrid.Instance.IsPlaceAvailable(Coordinats) && !_isForbiden;
+    public bool IsAvailable() => TileMapGrid.Instance.IsTileAvailable(Coordinats) && !_isForbiden;
 
     private void _updateIndicatorColor() => _setMaterialColor(IsAvailable() ? _availablePlaceholderColor : _unavailablePlaceholderColor);
 

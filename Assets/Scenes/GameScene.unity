@@ -4504,9 +4504,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 86450565}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 36, y: -12}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 36, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &353862046
@@ -15151,8 +15151,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1170981389}
-  - component: {fileID: 1170981391}
   - component: {fileID: 1170981392}
+  - component: {fileID: 1170981391}
   m_Layer: 0
   m_Name: FloorTiles
   m_TagString: Untagged
@@ -15272,8 +15272,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _size: {x: 12, y: 7}
-  _tilePrefab: {fileID: -2080321289667599051, guid: f3b7ddb77e5a4f44293c5e25e7cab77a, type: 3}
   _selectedObjectsInRange: {fileID: 11400000, guid: 5e1033e7c3e2e604f999e45c6567e4fe, type: 2}
+  _availablePurchasableItems: {fileID: 11400000, guid: fc69690723861cb4f85950cc4737b922, type: 2}
 --- !u!114 &1170981392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20282,6 +20282,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 139981212818723941, guid: 9460680dc4744bd48852a579b07a13d6, type: 3}
+      propertyPath: _spawnTile
+      value: 
+      objectReference: {fileID: 1993403434}
+    - target: {fileID: 139981212818723941, guid: 9460680dc4744bd48852a579b07a13d6, type: 3}
       propertyPath: _availablePurchasableItems
       value: 
       objectReference: {fileID: 11400000, guid: fc69690723861cb4f85950cc4737b922, type: 2}
@@ -23197,6 +23201,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f3b7ddb77e5a4f44293c5e25e7cab77a, type: 3}
+--- !u!114 &1993403434 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: -2080321289667599051, guid: f3b7ddb77e5a4f44293c5e25e7cab77a, type: 3}
+  m_PrefabInstance: {fileID: 1993403433}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fae6bca356fe59c47a2820e9f3db8198, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1995652869
 GameObject:
   m_ObjectHideFlags: 0

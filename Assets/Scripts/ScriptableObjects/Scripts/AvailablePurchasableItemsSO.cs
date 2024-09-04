@@ -16,8 +16,13 @@ public class AvailablePurchasableItemsSO : ScriptableObject
         return null;
     }
 
-    public int GetPurchasableItemIndex(PurchasableItemSO editableItem)
+    public int GetIndexByPurchasableItemSO(PurchasableItemSO editableItem)
     {
         return AvailablePurchasableItems.IndexOf(editableItem);
+    }
+
+    public int GetIndexByEditableItem(EditableItem editableItem)
+    {
+        return GetIndexByPurchasableItemSO(FindPurchasableItemByEditableItem(editableItem));
     }
 }

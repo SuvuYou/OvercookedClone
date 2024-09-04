@@ -1,7 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// TODO: generate default map counters using code
 public class EditableItem : NetworkBehaviour
 {
     [SerializeField] private PurchasableItemSO _purchasableItemReference;
@@ -11,15 +10,15 @@ public class EditableItem : NetworkBehaviour
     [SerializeField] private GameObject _selectedVisualIndicator;
     [SerializeField] private ClientAuthoritativeNetworkTransform _networkTransform;
 
-    private Vector2Int _parentTileCoordinats;
-    private Vector2Int _defaultCoords = new (-1, -1);
+    public Vector2Int ParentTileCoordinats { get; private set; }
+    private Vector2Int DEFAULT_COORDS = new (-1, -1);
 
-    private ulong _defaultEditorClientId = 999;
     private ulong _currentEditorClientId;
+    private const ulong DEFAULT_EDITOR_CLIENT_ID = 999;
 
     private void Awake()
     {
-        _currentEditorClientId = _defaultEditorClientId;
+        _currentEditorClientId = DEFAULT_EDITOR_CLIENT_ID;
 
         _selectedObjectsInRange.OnSelectSubject += _checkIsItemSelected;
         _selectedObjectsInRange.OnSelectTile += _updateTransformPosition;
@@ -31,6 +30,7 @@ public class EditableItem : NetworkBehaviour
     public override void OnDestroy()
     {
         base.OnDestroy();
+        TileMapGrid.Instance.RemoveItemFormGrid(ParentTileCoordinats);
     
         _selectedObjectsInRange.OnSelectSubject -= _checkIsItemSelected;
         _selectedObjectsInRange.OnSelectTile -= _updateTransformPosition;
@@ -44,21 +44,20 @@ public class EditableItem : NetworkBehaviour
         if (_selectedObjectsInRange.SelectedEditingSubject != this) return;
 
         _setCurrentEditor(editorClientId: NetworkManager.Singleton.LocalClientId);
-        _assignCoordinats(_defaultCoords);
+        AssignCoordinats(DEFAULT_COORDS);
     }
 
     private void _endEditing()
     {
         if (_selectedObjectsInRange.SelectedEditingSubject != this) return;
 
-        _setCurrentEditor(editorClientId: _defaultEditorClientId);
-        _assignCoordinats(_selectedObjectsInRange.SelectedGridTile?.Coordinats ?? _defaultCoords);
-        _updateTransformPosition(_selectedObjectsInRange.SelectedGridTile);  
+        _setCurrentEditor(editorClientId: DEFAULT_EDITOR_CLIENT_ID);
+        AssignCoordinats(_selectedObjectsInRange.SelectedGridTile?.Coordinats ?? DEFAULT_COORDS);
     }
 
     public void Interact() 
     { 
-        if (_currentEditorClientId == _defaultEditorClientId)
+        if (_currentEditorClientId == DEFAULT_EDITOR_CLIENT_ID)
         {
             _selectedObjectsInRange.TriggerOnStartEditing();
             
@@ -74,20 +73,21 @@ public class EditableItem : NetworkBehaviour
         _selectedObjectsInRange.TriggerOnEndEditing();
     }
 
-    private void _assignCoordinats(Vector2Int coords)
+    public void AssignCoordinats(Vector2Int coords)
     {
-        if (coords != _defaultCoords)
+        if (coords != DEFAULT_COORDS)
         {
-            TileMapGrid.Instance.TakeTile(coords);
+            TileMapGrid.Instance.AddItemToGrid(coords, this);
             _setCoordinats(coords.x, coords.y);
+            _networkTransform.SetTargetPosition(TileMapGrid.Instance.GetTileByCoordinats(coords).GetPlacePosition());
 
             return;
         }
 
-        if (_parentTileCoordinats == _defaultCoords) return; 
+        if (ParentTileCoordinats == DEFAULT_COORDS) return; 
 
-        TileMapGrid.Instance.FreeTile(_parentTileCoordinats);
-        _setCoordinats(_defaultCoords.x, _defaultCoords.y);
+        TileMapGrid.Instance.RemoveItemFormGrid(ParentTileCoordinats);
+        _setCoordinats(DEFAULT_COORDS.x, DEFAULT_COORDS.y);
     }
 
     private void _setCoordinats(int x, int y)
@@ -112,7 +112,7 @@ public class EditableItem : NetworkBehaviour
     
     private void _setCoordinatsLocally(int x, int y)
     {
-        _parentTileCoordinats = new (x, y);
+        ParentTileCoordinats = new (x, y);
     }
 
     private void _setCurrentEditor(ulong editorClientId)

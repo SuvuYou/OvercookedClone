@@ -257,7 +257,7 @@ public class LobbiesListManager : MonoBehaviour
     {
         try
         {
-            await func();
+            await func();  
         }
         catch (Exception e)
         {
