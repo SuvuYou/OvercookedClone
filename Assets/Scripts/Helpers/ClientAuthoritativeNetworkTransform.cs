@@ -12,7 +12,6 @@ public class ClientAuthoritativeNetworkTransform : NetworkBehaviour
 
     private void Update()
     {
-        // TODO: interpolate
         transform.position = new Vector3(_targetPosition.x, transform.position.y, _targetPosition.z);
     }
 

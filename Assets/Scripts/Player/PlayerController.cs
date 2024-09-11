@@ -19,13 +19,7 @@ public class PlayerController : KitchenItemParent
 
             PlayerInput.Instance.OnInteract += () => _selectedObjectsInRange.SelectedCounter?.Interact(this);
             PlayerInput.Instance.OnInteractAlternative += () => _selectedObjectsInRange.SelectedCounter?.InteractAlternative(this);
-            PlayerInput.Instance.OnInteractDuringEditing += () => 
-            {
-                if (_selectedObjectsInRange != null && _selectedObjectsInRange.SelectedEditingSubject != null)
-                {
-                    _selectedObjectsInRange.SelectedEditingSubject?.Interact();
-                }
-            };
+            PlayerInput.Instance.OnInteractDuringEditing += () => _selectedObjectsInRange.SelectedEditingSubject?.Interact();
             PlayerInput.Instance.OnInteractDuringEditing += () => _selectedObjectsInRange.SelectedShop?.Interact();
             GameManager.Instance.OnStateChange += _clearSelectedItems;
 

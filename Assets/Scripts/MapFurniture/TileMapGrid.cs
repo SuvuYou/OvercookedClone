@@ -92,6 +92,8 @@ public class TileMapGrid : NetworkBehaviour
     public bool IsTileAvailable(Vector2Int coords) => _gridData.IsTileAvailable(coords);
 
     public GridTile GetTileByCoordinats(Vector2Int coords) => _gridData.TilesByCoordinats[coords];
+
+    public List<EditableItem> GetAllPlacedItems() => _gridData.PlacedItemsByCoordinats.Values.ToList();
     
     public void SetTileData(Vector2Int coords, EditableItem editableItem)
     {

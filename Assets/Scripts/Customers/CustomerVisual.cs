@@ -13,7 +13,7 @@ public class CustomerVisual : MonoBehaviour
     [SerializeField] private Color EATING_COLOR;
     [SerializeField] private Color WAITING_TO_LEAVE_COLOR;
 
-    private const float TIME_FOR_TRANSITION = 10f;
+    private const float TIME_FOR_TRANSITION = 1f;
     private const string EMISSION_COLOR_STRING = "_EmissionColor";
 
     private bool _isTransitioning = false;

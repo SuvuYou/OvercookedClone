@@ -22,14 +22,23 @@ public class ServiceTable : MonoBehaviour
         }
     } 
 
-    public void ClearTable()
+    public void TakeTable (CustomersGroup group) => _currentGroup = group;
+    
+    public void FreeTable (Vector3 exitPosition) 
+    {
+        _clearTable();
+
+        if (_currentGroup == null) return;
+
+        _currentGroup.Leave(exitPosition);
+        _currentGroup = null;
+    } 
+
+    private void _clearTable()
     {
         foreach(Chair chair in ActiveChairs)
         {
             if (chair.IsHoldingItem()) chair.DestroyCurrentItemHeld();
         }
     }
-
-    public void TakeTable (CustomersGroup group) => _currentGroup = group;
-    public void FreeTable () => _currentGroup = null;
 }

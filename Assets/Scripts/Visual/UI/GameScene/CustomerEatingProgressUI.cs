@@ -4,9 +4,10 @@ using UnityEngine.UI;
 
 public class CustomerEatingProgressUI : MonoBehaviour
 {
-    [SerializeField] private ProgressTracker _progressTracker; 
     [SerializeField] private Image _progressCircle;
     [SerializeField] private Customer _customer;
+
+    private ProgressTracker _progressTracker;
 
     private void Start()
     {

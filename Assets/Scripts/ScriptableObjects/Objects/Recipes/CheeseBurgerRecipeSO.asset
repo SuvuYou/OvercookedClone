@@ -16,6 +16,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a75568b8daaff7048844d7fad07cb1a2, type: 2}
   - {fileID: 11400000, guid: 70c2874ed99bc714490a028559822915, type: 2}
   - {fileID: 11400000, guid: 5f7853aecfca67847aa996f0474c28e5, type: 2}
+  RequiredMapItems:
+  - {fileID: 11400000, guid: 1c0f0c16ca8c280489d0e0c65cdc5b14, type: 2}
+  - {fileID: 11400000, guid: 21ac4e14b11bab241b1fe67ce9ac635a, type: 2}
+  - {fileID: 11400000, guid: 4f45ebac7bdc66344a9a9fe56278b583, type: 2}
+  - {fileID: 11400000, guid: e75fb1a66e347944eb02882cd5d9ec98, type: 2}
+  - {fileID: 11400000, guid: 7373c853a5991dd409b11b3c6605699b, type: 2}
   RecipeName: Cheese Burger
   Price: 120
   EatingTime: 6

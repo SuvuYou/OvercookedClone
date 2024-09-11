@@ -80,12 +80,18 @@ public class StoveCounter : BaseCounter
 
         if (_fryingProgress.Progress >= _fryingProgress.MaxProgress)
         {
-            KitchenItemSO friedItem = this.GetCurrentItemHeld().GetItemReference().FryableSO.FriedPrefab.GetItemReference();
-            
-            this.DestroyCurrentItemHeld();
-            this.SpawnKitchenItem(friedItem);
+            KitchenItemSO friedItem = this.GetCurrentItemHeld()?.GetItemReference().FryableSO.FriedPrefab.GetItemReference();
 
-            _resetProgress();
+            this.DestroyCurrentItemHeld();
+            this._resetProgress();
+
+            if (friedItem == null) 
+            {
+                _switchStateServerRpc(FryingState.Idle);
+                return;
+            }
+            
+            this.SpawnKitchenItem(friedItem);
 
             if (friedItem.IsFryable())
             {

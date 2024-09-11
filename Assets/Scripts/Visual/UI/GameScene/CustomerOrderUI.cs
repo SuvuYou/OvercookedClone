@@ -10,6 +10,7 @@ public class CustomerOrderUI : MonoBehaviour
     {
         _customer.OnSitDown += _enableIngredientsIcons;
         _customer.OnRecieveOrder += _disableIngredientsIcons;
+        _customer.OnCustomerLeaving += _disableIngredientsIcons;
 
         _spawnIngredientIcons(ingredients: _customer.Order.Ingredients);
         _disableIngredientsIcons();
@@ -19,6 +20,7 @@ public class CustomerOrderUI : MonoBehaviour
     {
         _customer.OnSitDown -= _enableIngredientsIcons;
         _customer.OnRecieveOrder -= _disableIngredientsIcons;
+        _customer.OnCustomerLeaving -= _disableIngredientsIcons;
     }
 
     private void _enableIngredientsIcons() 

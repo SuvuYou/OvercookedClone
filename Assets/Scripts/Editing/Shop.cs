@@ -26,8 +26,8 @@ public class Shop : NetworkBehaviour
     public void CreateItem(PurchasableItemSO item)
     {
         var itemIndex = _availablePurchasableItems.GetIndexByPurchasableItemSO(item);
-        // if (itemIndex != -1 && GameManager.Instance.Balance > item.Price) 
-        _spawnItemServerRpc(itemIndex);
+        if (itemIndex != -1 && GameManager.Instance.Balance > item.Price) 
+            _spawnItemServerRpc(itemIndex);
     }
 
     [ServerRpc(RequireOwnership = false)]

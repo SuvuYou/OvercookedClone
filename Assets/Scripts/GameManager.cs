@@ -5,8 +5,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 // TODO LIST:
-// Day cycles
-// Save mechanism
 // Challange
 // Head textures and more colors
 
@@ -30,16 +28,22 @@ public class GameManager : NetworkBehaviour
     public event Action<bool> OnLocalPlayerPause;
     public event Action<float> OnCountdownTimerChange;
     public event Action<float> OnBalanceUpdated;
+    public event Action<int, float> OnStartDay;
+    public event Action OnEndDay;
 
     private Dictionary<ulong, bool> _playersReadyStatus = new();
     private Dictionary<ulong, bool> _playersPauseStatus = new();
     private NetworkVariable<GameState> _state = new (value: GameState.Waiting);
     public GameState State { get { return _state.Value; } }
 
+    public int CurrentDay { get; private set; } = 1;
+
     private NetworkVariable<float> _balance = new();
     public float Balance { get => _balance.Value; }
 
     private TimingTimer _countdownTimer = new (defaultTimerValue: 3f);
+    private float _currentCountdownNumber;
+    private TimingTimer _dayTimer = new (defaultTimerValue: 90f); 
     public bool IsPaused { get; private set; } = false;
     public bool IsLocalPaused { get; private set; } = false;
 
@@ -88,6 +92,9 @@ public class GameManager : NetworkBehaviour
             };
 
             DataPersistanceManager.Instance.OnLoadGameData += (GameData data) => _balance.Value = data.Balance;
+
+            OnEndDay += _destroyAllKitchenItemParentsItems; 
+            OnEndDay += () => DataPersistanceManager.Instance.SaveData();
         }
     }
 
@@ -125,6 +132,7 @@ public class GameManager : NetworkBehaviour
     {
         PlayerInput.Instance.OnPausePressed -= _setLocalPlayerPause;
         PlayerInput.Instance.OnInteractDuringWaitingState -= _setLocalPlayerReady;
+        OnEndDay -= _destroyAllKitchenItemParentsItems; 
     }   
 
     private void Update()
@@ -137,15 +145,27 @@ public class GameManager : NetworkBehaviour
                 break;
             case GameState.Countdown:
                 _countdownTimer.SubtractTime(Time.deltaTime);
-                _triggerOnCountdownEventClientRpc(_countdownTimer.Time);
 
+                if (_currentCountdownNumber != Math.Ceiling(_countdownTimer.Time))
+                {
+                    _triggerOnCountdownEventClientRpc(_countdownTimer.Time);
+                    _currentCountdownNumber = (float) Math.Ceiling(_countdownTimer.Time);
+                }
+                
                 if (_countdownTimer.IsTimerUp())
                 {
-                    _changeStateServerRpc(GameState.Editing);
                     _countdownTimer.ResetTimer();
+                    _changeStateServerRpc(GameState.Active);
                 }
                 break;
             case GameState.Active:
+                _dayTimer.SubtractTime(Time.deltaTime);
+
+                if (_dayTimer.IsTimerUp())
+                {
+                    _dayTimer.ResetTimer();
+                    _changeStateServerRpc(GameState.Editing);
+                }
                 break;
             case GameState.GameOver:
                 break;
@@ -154,9 +174,24 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    public void StartNewDay(int newDayCount)
+    {
+        CurrentDay = newDayCount;
+        _triggerStartDayServerRpc(daysCount: newDayCount, timer: _dayTimer.Time);
+        _changeStateServerRpc(GameState.Active);
+    }
+
+    [ServerRpc]
+    private void _triggerStartDayServerRpc(int daysCount, float timer) => _triggerStartDayClientRpc(daysCount, timer);
+
+    [ClientRpc]
+    private void _triggerStartDayClientRpc(int daysCount, float timer) => OnStartDay?.Invoke(daysCount, timer);
+
     [ServerRpc]
     private void _changeStateServerRpc(GameState newState)
     {
+        if (_state.Value == GameState.Active) _triggerOnEndDayEventClientRpc();
+        
         _state.Value = newState;
         _triggerOnChangeStateEventClientRpc(newState);
     }
@@ -221,28 +256,20 @@ public class GameManager : NetworkBehaviour
         {
             if (State == GameState.Waiting)
             {
-                _changeStateServerRpc(GameState.Editing);
+                StartNewDay(newDayCount: 1);
                 _triggerOnStartGameEventClientRpc();
-            }
-
-            if (State == GameState.Active)
-            {
-                _changeStateServerRpc(GameState.Active);
             }
         }
     }
 
     [ClientRpc]
-    private void _triggerOnStartGameEventClientRpc()
-    {
-        OnStartGame?.Invoke();
-    }
+    private void _triggerOnStartGameEventClientRpc() => OnStartGame?.Invoke();
+    
+    [ClientRpc]
+    private void _triggerOnChangeStateEventClientRpc(GameState newState) => OnStateChange?.Invoke(newState);
 
     [ClientRpc]
-    private void _triggerOnChangeStateEventClientRpc(GameState newState)
-    {
-        OnStateChange?.Invoke(newState);
-    }
+    private void _triggerOnEndDayEventClientRpc() => OnEndDay?.Invoke();
 
     [ClientRpc]
     private void _triggerOnCountdownEventClientRpc(float countdownTime)
@@ -285,4 +312,17 @@ public class GameManager : NetworkBehaviour
 
     [ServerRpc(RequireOwnership = false)]
     private void _setBalanceServerRpc(float balanceDifference) => _balance.Value += balanceDifference;
+
+    private void _destroyAllKitchenItemParentsItems()
+    {
+        var kitchenItemParents = FindObjectsOfType<KitchenItemParent>();
+
+        foreach (KitchenItemParent kitchenItemParent in kitchenItemParents)
+        {
+            if (kitchenItemParent.IsHoldingItem())
+            {
+                kitchenItemParent.DestroyCurrentItemHeld();
+            }
+        }
+    }
 }

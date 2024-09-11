@@ -21,13 +21,16 @@ public class GridTile : MonoBehaviour
         _currentIndicatorMaterial = new (mesh.material);
         mesh.material = _currentIndicatorMaterial;
 
-        _updateIndicatorColor();
         SetIsIndicatorVisible(isVisible: false);
     }
 
     public void InitCoordinats(Vector2Int coords) => Coordinats = coords;
 
-    public void SetIsIndicatorVisible(bool isVisible) => _placeholderIndicator.SetActive(isVisible);
+    public void SetIsIndicatorVisible(bool isVisible) 
+    {
+        _updateIndicatorColor();
+        _placeholderIndicator.SetActive(isVisible);
+    }
     
     public Vector3 GetPlacePosition() => _placeholder.position;
 

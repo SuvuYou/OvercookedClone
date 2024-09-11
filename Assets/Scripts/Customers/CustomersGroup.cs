@@ -14,6 +14,8 @@ public class CustomersGroup : MonoBehaviour
 
     public event Action OnGroupFinishedEating;
 
+    public ServiceTable AssignedServiceTable { get; private set; }
+
     private const int MIN_CUSTOMERS_IN_GROUP = 1;
     private const int MAX_CUSTOMERS_IN_GROUP = 4;
 
@@ -45,12 +47,14 @@ public class CustomersGroup : MonoBehaviour
             _groupConfig[i] = recipeIndex;
 
             customer.OnFinishEating += _checkIsGroupFinishedEating;
-            customer.OnCustomerLeaving += _reduceCustomerCount;
+            customer.OnCustomerLeft += _reduceCustomerCount;
         }
     }
 
     public void AssingTable(ServiceTable table)
     {
+        AssignedServiceTable = table;
+        
         for (int i = 0; i < CustomersCount; i++)
         {
             Customers[i].AssingChair(table.ActiveChairs[i]);
@@ -59,12 +63,9 @@ public class CustomersGroup : MonoBehaviour
 
     public void Leave(Vector3 exitPosition)
     {
-        for (int i = 0; i < CustomersCount; i++)
+        foreach (Customer customer in Customers)
         {
-            foreach (Customer customer in Customers)
-            {
-                customer.Leave(exitPosition);
-            }
+            customer.Leave(exitPosition);
         }
     }
 

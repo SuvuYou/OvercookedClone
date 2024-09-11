@@ -15,6 +15,10 @@ MonoBehaviour:
   Ingredients:
   - {fileID: 11400000, guid: bd2c8128a53e62340b84d3350ca5368d, type: 2}
   - {fileID: 11400000, guid: 5dee28757be7e4d4ea9fd08b648d30a9, type: 2}
+  RequiredMapItems:
+  - {fileID: 11400000, guid: 36a9cdd834a423f44b6c86ac0feddd6a, type: 2}
+  - {fileID: 11400000, guid: beec667e5f36b8a4082360dd1ee2ad5f, type: 2}
+  - {fileID: 11400000, guid: 7373c853a5991dd409b11b3c6605699b, type: 2}
   RecipeName: Salad
   Price: 100
   EatingTime: 4

@@ -15,9 +15,19 @@ public class CustomersSpawnerManager : NetworkBehaviour
     private List<CustomersGroup> _customersQueue = new();
 
     private const int MAX_GROUPS_WAITING_COUNT = 4; 
-    private const float MIN_TIMEOUT_BETWEEN_GROUPS_SPAWNED = 1f; 
-    private const float MAX_TIMEOUT_BETWEEN_GROUPS_SPAWNED = 5f; 
+    private const float MIN_TIMEOUT_BETWEEN_GROUPS_SPAWNED = 2f; 
+    private const float MAX_TIMEOUT_BETWEEN_GROUPS_SPAWNED = 10f; 
     private TimingTimer _spawningGroupTimer = new(minDefaultTimerValue: MIN_TIMEOUT_BETWEEN_GROUPS_SPAWNED, maxDefaultTimerValue: MAX_TIMEOUT_BETWEEN_GROUPS_SPAWNED);
+
+    private void Start()
+    {
+        GameManager.Instance.OnEndDay += _resetGroups;
+    }
+
+    public override void OnDestroy()
+    {
+        GameManager.Instance.OnEndDay -= _resetGroups;
+    }
 
     private void Update()
     {
@@ -30,6 +40,14 @@ public class CustomersSpawnerManager : NetworkBehaviour
         {
             _handleSpawningGroupsForQueue();
         }
+    }
+
+    private void _resetGroups()
+    {
+        _serviceTablesManager.ClearAllTables(exitPosition: _spawnPosition.position);
+
+        _activeCustomers.Clear();
+        _customersQueue.Clear();
     }
 
     private void _handleSpawningGroupsForQueue()
@@ -99,9 +117,7 @@ public class CustomersSpawnerManager : NetworkBehaviour
 
         group.OnGroupFinishedEating += () => 
         {
-            group.Leave(exitPosition: _spawnPosition.position);
-            serviceTable.ClearTable();
-            serviceTable.FreeTable();
+            serviceTable.FreeTable(exitPosition: _spawnPosition.position);
             _activeCustomers.Remove(group);
             _checkInGroupFromQueue();
         };

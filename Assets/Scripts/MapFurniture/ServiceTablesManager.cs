@@ -21,6 +21,14 @@ public class ServiceTablesManager : MonoBehaviour
         return mostSuitableTable;
     }
 
+    public void ClearAllTables(Vector3 exitPosition)
+    {
+        foreach (ServiceTable table in _tables)
+        {
+            table.FreeTable(exitPosition);
+        }
+    }
+
     public int GetIndexByTable(ServiceTable table) 
     {
         return Array.IndexOf(array: _tables, value: table);

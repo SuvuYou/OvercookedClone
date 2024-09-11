@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b8bb205de7da144abdbbac3ac050c99, type: 3}
   m_Name: _AvailableRecipesListSO
   m_EditorClassIdentifier: 
-  AvailableRecipes:
+  AllAvailableRecipes:
   - {fileID: 11400000, guid: 31bc90fc5b63ae647bea18ff6bf192b0, type: 2}
   - {fileID: 11400000, guid: 10242dca0f8cff44f90bce19440c65c5, type: 2}
   - {fileID: 11400000, guid: eea3c0aff6fa06e4d8a0897a20ffe218, type: 2}

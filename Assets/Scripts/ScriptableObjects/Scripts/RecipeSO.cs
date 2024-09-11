@@ -5,6 +5,7 @@ using UnityEngine;
 public class RecipeSO : ScriptableObject
 {
     public List<KitchenItemSO> Ingredients; 
+    public List<PurchasableItemSO> RequiredMapItems; 
     public string RecipeName;
     public int Price;
     public float EatingTime;

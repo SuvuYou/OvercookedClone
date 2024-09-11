@@ -20,6 +20,7 @@ public class Customer : MonoBehaviour
     public event Action OnRecieveOrder;
     public event Action OnFinishEating;
     public event Action OnCustomerLeaving;
+    public event Action OnCustomerLeft;
 
     public bool IsFinishedEating = false;
     public float PriceMutiplier { get; private set; } = 1f;
@@ -33,8 +34,7 @@ public class Customer : MonoBehaviour
     public Chair AssingedChair { get; private set; }
 
     private TimingTimer _eatingTimer = new();
-    private ProgressTracker _eatingProgressTracker = new();
-    public ProgressTracker EatingProgressTracker { get => _eatingProgressTracker; }
+    public ProgressTracker EatingProgressTracker { get; private set; } = new();
     private NavMeshAgent _navMehAgent;
 
     private void Awake()
@@ -47,6 +47,7 @@ public class Customer : MonoBehaviour
         switch (_currentState)
         {
             case State.Walking:
+                _lastPositionBeforeSittingDown = gameObject.transform.position;
                 _checkIsCloseToDestination();
                 break;
             case State.Eating:
@@ -63,15 +64,15 @@ public class Customer : MonoBehaviour
 
     private void _checkIsCloseToDestination()
     {
-        if (!IsFinishedEating && _navMehAgent.remainingDistance < SITTING_DISTANCE_THRESHOLD)
+        if (!IsFinishedEating && _navMehAgent.remainingDistance < SITTING_DISTANCE_THRESHOLD && _navMehAgent.remainingDistance != 0)
         {
             _sitDown();
             OnSitDown?.Invoke();
         }
 
-        if (IsFinishedEating && _navMehAgent.remainingDistance < EXIT_DISTANCE_THRESHOLD)
+        if (IsFinishedEating && _navMehAgent.remainingDistance < EXIT_DISTANCE_THRESHOLD && _navMehAgent.remainingDistance != 0)
         {
-            OnCustomerLeaving?.Invoke();
+            OnCustomerLeft?.Invoke();
             Destroy(this.gameObject);
         }
     }
@@ -79,13 +80,13 @@ public class Customer : MonoBehaviour
     private void _updateEatingTimer()
     {
         _eatingTimer.SubtractTime(Time.deltaTime);
-        _eatingProgressTracker.TriggerProgressUpdate(newProgress: _eatingProgressTracker.Progress + Time.deltaTime);
+        EatingProgressTracker.TriggerProgressUpdate(newProgress: EatingProgressTracker.Progress + Time.deltaTime);
 
         if (_eatingTimer.IsTimerUp())
         {
             _eatingTimer.ResetTimer();
-            _eatingProgressTracker.SetMaxProgress(_eatingTimer.Time);
-            _eatingProgressTracker.TriggerProgressUpdate(newProgress: 0);
+            EatingProgressTracker.SetMaxProgress(_eatingTimer.Time);
+            EatingProgressTracker.TriggerProgressUpdate(newProgress: 0);
 
             AssingedChair.FinishDish();
             _switchState(State.Idle);
@@ -97,19 +98,23 @@ public class Customer : MonoBehaviour
 
     public int MakeAnOrder(int forceRecipeIndex = -1)
     {
-        int recipeIndex = UnityEngine.Random.Range(0, _availableRecipesList.AvailableRecipes.Count);
+        var placedMapItems = TileMapGrid.Instance.GetAllPlacedItems().Select(item => item.PurchasableItemReference).ToList();
+        var availableRecipes = _availableRecipesList.GetAvailableRecipes(placedMapItems);
+        int recipeIndex = UnityEngine.Random.Range(0, availableRecipes.Count);
 
         if (forceRecipeIndex != -1) recipeIndex = forceRecipeIndex;
-        
-        Order = _availableRecipesList.AvailableRecipes[recipeIndex];
+
+        Order = availableRecipes[recipeIndex];
         _eatingTimer.SetDefaultTimerTime(defaultTimerValue: Order.EatingTime);
-        _eatingProgressTracker.SetMaxProgress(Order.EatingTime);
+        EatingProgressTracker.SetMaxProgress(Order.EatingTime);
 
         return recipeIndex;
     } 
 
     public void Leave(Vector3 exitPosition)
     {
+        OnCustomerLeaving?.Invoke();
+        IsFinishedEating = true;
         gameObject.transform.position = _lastPositionBeforeSittingDown;
         _startAgent(destination: exitPosition);
         _switchState(State.Walking);
@@ -140,7 +145,6 @@ public class Customer : MonoBehaviour
     private void _sitDown()
     {
         _stopAgent();
-        _lastPositionBeforeSittingDown = gameObject.transform.position;
         AssingedChair.TakeSit(sitter: this);
         _switchState(State.WaitingForOrder);
     }
