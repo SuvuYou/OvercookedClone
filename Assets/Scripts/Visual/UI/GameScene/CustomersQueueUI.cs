@@ -34,7 +34,7 @@ public class CustomersQueueUI : MonoBehaviour
             UIelem.Init(groupSize: queue[i]);
         }
 
-        if (isEmpty && this.isActiveAndEnabled) this.gameObject.SetActive(false);
-        else this.gameObject.SetActive(true);
+        if (isEmpty) _listHolder.gameObject.SetActive(false);
+        else _listHolder.gameObject.SetActive(true);
     }
 }

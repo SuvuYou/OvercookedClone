@@ -73,7 +73,7 @@ public class TileMapGrid : NetworkBehaviour
     {
         if (!IsServer) return null;
 
-        var createdItem = Instantiate(itemToSpawn, tile.GetPlacePosition(), Quaternion.identity);
+        var createdItem = Instantiate(itemToSpawn, tile.GetPlacePosition(), Quaternion.Euler(0, 180, 0));
         var networkObject = createdItem.GetComponent<NetworkObject>();
         networkObject.Spawn();
 
