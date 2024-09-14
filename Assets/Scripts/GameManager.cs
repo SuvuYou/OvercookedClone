@@ -4,9 +4,6 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
-// TODO LIST:
-// Head textures and more colors
-
 public enum GameState 
 {
     Waiting,
