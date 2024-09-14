@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DitherTransparency
+  m_Name: WallConstantTransparentMaterial
   m_Shader: {fileID: -6465566751694194690, guid: baa9ac9d499e448428b914c0fffe7e1a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -54,7 +54,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha: 0.39999986
+    - _Alpha: 0.5
     - _Clippiung: 1
     - _QueueControl: 0
     - _QueueOffset: 0
