@@ -5,7 +5,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 // TODO LIST:
-// Challange
 // Head textures and more colors
 
 public enum GameState 
@@ -20,6 +19,8 @@ public enum GameState
 public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance;
+
+    private const float PROGRESS_GOAL_PER_DAY = 400f;
 
     public event Action<GameState> OnStateChange;
     public event Action<bool> OnPause;
@@ -41,6 +42,11 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<float> _balance = new();
     public float Balance { get => _balance.Value; }
 
+    public NetworkVariable<float> CurrentDayProgress { get; private set; } = new();
+
+    private float _currentDayProgressGoal;
+    public float CurrentDayProgressGoal { get => _currentDayProgressGoal; }
+
     private TimingTimer _countdownTimer = new (defaultTimerValue: 3f);
     private float _currentCountdownNumber;
     private TimingTimer _dayTimer = new (defaultTimerValue: 90f); 
@@ -58,10 +64,6 @@ public class GameManager : NetworkBehaviour
             Instance = this;
             Plate.InitAllowedIngridients(_allowedIngredients);
             _balance.OnValueChanged += (float prevValue, float newValue) => OnBalanceUpdated?.Invoke(newValue);
-            DataPersistanceManager.Instance.OnSaveGameData += (GameData currentData, Action<GameData> saveData) => 
-            {
-                currentData.Balance = Balance; saveData(currentData);
-            };
         }
         else
         {
@@ -81,6 +83,8 @@ public class GameManager : NetworkBehaviour
 
         if (IsServer)
         {
+            DataPersistanceManager.Instance.OnSaveGameData += _onSaveData;
+
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += _spawnPlayersOnLoad;
 
             // handle spawn player on late join
@@ -96,6 +100,13 @@ public class GameManager : NetworkBehaviour
             OnEndDay += _destroyAllKitchenItemParentsItems; 
             OnEndDay += () => DataPersistanceManager.Instance.SaveData();
         }
+    }
+
+    private void _onSaveData(GameData currentData, Action<GameData> saveData) 
+    {
+        currentData.Balance = Balance; 
+        currentData.CurrentDay = CurrentDay; 
+        saveData(currentData);
     }
 
     [ClientRpc]
@@ -178,6 +189,8 @@ public class GameManager : NetworkBehaviour
     {
         CurrentDay = newDayCount;
         _triggerStartDayServerRpc(daysCount: newDayCount, timer: _dayTimer.Time);
+        _setCurrentDayProgressGoalServerRpc(newDayCount * PROGRESS_GOAL_PER_DAY);
+        _resetCurrentDayProgressServerRpc();
         _changeStateServerRpc(GameState.Active);
     }
 
@@ -302,6 +315,23 @@ public class GameManager : NetworkBehaviour
 
         return false;
     }
+
+    public void RecordCurrentDayProgress(float increase)
+    {
+        if (IsServer)
+        {
+            CurrentDayProgress.Value += increase;
+        }
+    }  
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _resetCurrentDayProgressServerRpc() => CurrentDayProgress.Value = 0;
+
+    [ServerRpc(RequireOwnership = false)]
+    private void _setCurrentDayProgressGoalServerRpc(float goal) => _setCurrentDayProgressGoalClientRpc(goal);
+
+    [ClientRpc]
+    private void _setCurrentDayProgressGoalClientRpc(float goal) => _currentDayProgressGoal = goal;
 
     public void UpdateBalance(float increase = 0, float decrease = 0)
     {

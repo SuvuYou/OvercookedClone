@@ -53,6 +53,7 @@ public class ShopUIManager : MonoBehaviour
 
     private void _show() 
     {
+        _clearTiles();
         _generateTilesList();
         _shopPanel.gameObject.SetActive(true);
     }

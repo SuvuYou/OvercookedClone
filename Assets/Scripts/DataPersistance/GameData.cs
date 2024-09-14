@@ -7,6 +7,7 @@ using UnityEngine;
 public class GameData
 {
     public float Balance;
+    public int CurrentDay;
 
     // coordicats of placed items are keys and integers are indecies in list of AvailablePurchasableItems 
     public Dictionary<Vector2Int, int> MapItems;

@@ -60,5 +60,10 @@ public class DataPersistanceManager : MonoBehaviour
         OnLoadGameData?.Invoke(Data);
     } 
 
+    public void DeleteSaveFile()
+    {
+        _dataHandler.Delete();
+    }
+
     private void _modifyGameData(GameData newData) => Data = newData;
 }

@@ -47,7 +47,7 @@ public class Customer : MonoBehaviour
         switch (_currentState)
         {
             case State.Walking:
-                _lastPositionBeforeSittingDown = gameObject.transform.position;
+                _recordLastPositionBeforeSittingDown();
                 _checkIsCloseToDestination();
                 break;
             case State.Eating:
@@ -93,6 +93,7 @@ public class Customer : MonoBehaviour
 
             IsFinishedEating = true;
             OnFinishEating?.Invoke();
+            // gameObject.transform.position = Vector3.zero;
         }
     }
 
@@ -100,6 +101,7 @@ public class Customer : MonoBehaviour
     {
         var placedMapItems = TileMapGrid.Instance.GetAllPlacedItems().Select(item => item.PurchasableItemReference).ToList();
         var availableRecipes = _availableRecipesList.GetAvailableRecipes(placedMapItems);
+        
         int recipeIndex = UnityEngine.Random.Range(0, availableRecipes.Count);
 
         if (forceRecipeIndex != -1) recipeIndex = forceRecipeIndex;
@@ -113,8 +115,8 @@ public class Customer : MonoBehaviour
 
     public void Leave(Vector3 exitPosition)
     {
-        OnCustomerLeaving?.Invoke();
         IsFinishedEating = true;
+        OnCustomerLeaving?.Invoke();
         gameObject.transform.position = _lastPositionBeforeSittingDown;
         _startAgent(destination: exitPosition);
         _switchState(State.Walking);
@@ -133,6 +135,7 @@ public class Customer : MonoBehaviour
     {  
         _switchState(State.Eating);
         GameManager.Instance.UpdateBalance(increase: Order.Price * PriceMutiplier);
+        GameManager.Instance.RecordCurrentDayProgress(increase: Order.Price * PriceMutiplier);
         OnRecieveOrder?.Invoke();
     } 
 
@@ -163,6 +166,11 @@ public class Customer : MonoBehaviour
         _navMehAgent.enabled = true;
         _navMehAgent.isStopped = false;
         _navMehAgent.SetDestination(destination);
+    }
+
+    private void _recordLastPositionBeforeSittingDown()
+    {
+        _lastPositionBeforeSittingDown = gameObject.transform.position;
     }
 
     private void _switchState(State newState)

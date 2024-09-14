@@ -25,6 +25,6 @@ public class ShopTileUI : MonoBehaviour
     {
         _priceText.text = item.Price.ToString() + "$";
         _image.sprite = item.ShopSpriteImage;
-        _button.interactable = GameManager.Instance.Balance > item.Price;
+        _button.interactable = GameManager.Instance.Balance >= item.Price;
     }
 }

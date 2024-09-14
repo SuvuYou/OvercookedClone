@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CustomersGroup : MonoBehaviour
@@ -39,7 +40,7 @@ public class CustomersGroup : MonoBehaviour
 
         for (int i = 0; i < CustomersCount; i++)
         {
-            Customer customer = Instantiate(_customerPrefab, spawnPosition);
+            Customer customer = Instantiate(_customerPrefab, spawnPosition.position, Quaternion.identity);
             customer.SetPriceMultiplier(priceMutiplier: _customerCountToPriceMultiplier[CustomersCount]);
             Customers.Add(customer);
 
@@ -47,7 +48,7 @@ public class CustomersGroup : MonoBehaviour
             _groupConfig[i] = recipeIndex;
 
             customer.OnFinishEating += _checkIsGroupFinishedEating;
-            customer.OnCustomerLeft += _reduceCustomerCount;
+            customer.OnCustomerLeft += () => _reduceCustomerCount(customer);
         }
     }
 
@@ -63,17 +64,17 @@ public class CustomersGroup : MonoBehaviour
 
     public void Leave(Vector3 exitPosition)
     {
-        foreach (Customer customer in Customers)
+        for (int i = 0; i < CustomersCount; i++)
         {
-            customer.Leave(exitPosition);
+            Customers[i].Leave(exitPosition);
         }
     }
 
-    private void _reduceCustomerCount()
+    private void _reduceCustomerCount(Customer customer)
     {
-        CustomersCount--;
+        Customers.Remove(customer);
 
-        if (CustomersCount == 0)
+        if (Customers.Count == 0)
         {
             Destroy(this.gameObject);
         }
@@ -87,13 +88,5 @@ public class CustomersGroup : MonoBehaviour
         }
     }
 
-    private bool _isGroupFinishedEating()
-    {
-        foreach (Customer customer in Customers)
-        {
-            if (!customer.IsFinishedEating) return false;
-        }
-
-        return true;
-    }
+    private bool _isGroupFinishedEating() => Customers.All(c => c.IsFinishedEating);
 }

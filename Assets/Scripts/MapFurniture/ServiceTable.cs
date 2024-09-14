@@ -8,8 +8,8 @@ public class ServiceTable : MonoBehaviour
     public List<Chair> ActiveChairs {get; private set; } = new();
     public int ActiveChairsCount { get => ActiveChairs.Count; }
     
-    private CustomersGroup _currentGroup;
-    public bool IsAvailable { get => _currentGroup == null; }
+    public CustomersGroup CurrentGroup { get; private set; }
+    public bool IsAvailable { get => CurrentGroup == null; }
 
     private void Start()
     {
@@ -22,16 +22,13 @@ public class ServiceTable : MonoBehaviour
         }
     } 
 
-    public void TakeTable (CustomersGroup group) => _currentGroup = group;
+    public void TakeTable (CustomersGroup group) => CurrentGroup = group;
     
-    public void FreeTable (Vector3 exitPosition) 
+    public void FreeTable() 
     {
         _clearTable();
-
-        if (_currentGroup == null) return;
-
-        _currentGroup.Leave(exitPosition);
-        _currentGroup = null;
+        
+        CurrentGroup = null;
     } 
 
     private void _clearTable()

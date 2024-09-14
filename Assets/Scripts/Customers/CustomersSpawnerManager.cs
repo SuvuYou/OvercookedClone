@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -10,11 +11,12 @@ public class CustomersSpawnerManager : NetworkBehaviour
     [SerializeField] private Transform _spawnPosition;
     [SerializeField] private CustomersGroup _customersGroupPrefab;
     [SerializeField] private ServiceTablesManager _serviceTablesManager;
+    [SerializeField] private AvailableRecipesListSO _availableRecipesList;
 
     private List<CustomersGroup> _activeCustomers = new();
     private List<CustomersGroup> _customersQueue = new();
 
-    private const int MAX_GROUPS_WAITING_COUNT = 4; 
+    private const int MAX_GROUPS_WAITING_COUNT = 1; 
     private const float MIN_TIMEOUT_BETWEEN_GROUPS_SPAWNED = 2f; 
     private const float MAX_TIMEOUT_BETWEEN_GROUPS_SPAWNED = 10f; 
     private TimingTimer _spawningGroupTimer = new(minDefaultTimerValue: MIN_TIMEOUT_BETWEEN_GROUPS_SPAWNED, maxDefaultTimerValue: MAX_TIMEOUT_BETWEEN_GROUPS_SPAWNED);
@@ -57,6 +59,11 @@ public class CustomersSpawnerManager : NetworkBehaviour
         if (_spawningGroupTimer.IsTimerUp() && _customersQueue.Count < MAX_GROUPS_WAITING_COUNT)
         {
             _spawningGroupTimer.ResetTimer();
+
+            var placedMapItems = TileMapGrid.Instance.GetAllPlacedItems().Select(item => item.PurchasableItemReference).ToList();
+            var availableRecipes = _availableRecipesList.GetAvailableRecipes(placedMapItems);
+
+            if (availableRecipes.Count <= 0) return;
 
             CustomersGroup group = Instantiate(_customersGroupPrefab, _spawnPosition);
             group.InitGroupSize();
@@ -117,9 +124,14 @@ public class CustomersSpawnerManager : NetworkBehaviour
 
         group.OnGroupFinishedEating += () => 
         {
-            serviceTable.FreeTable(exitPosition: _spawnPosition.position);
-            _activeCustomers.Remove(group);
-            _checkInGroupFromQueue();
+            group.Leave(exitPosition: _spawnPosition.position);
+            serviceTable.FreeTable();
+
+            if (IsServer)
+            {
+                _activeCustomers.Remove(group);
+                _checkInGroupFromQueue();
+            }
         };
     }
 

@@ -25,7 +25,12 @@ public class ServiceTablesManager : MonoBehaviour
     {
         foreach (ServiceTable table in _tables)
         {
-            table.FreeTable(exitPosition);
+            if (table.CurrentGroup != null)
+            {   
+                table.CurrentGroup.Leave(exitPosition);
+            }
+
+            table.FreeTable();
         }
     }
 

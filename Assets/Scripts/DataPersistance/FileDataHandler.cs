@@ -74,4 +74,13 @@ public class FileDataHandler
         return data;
     }
 
+    public void Delete()
+    {
+        var fullpath = Path.Combine(_fileDirectoryPath, _fileName);
+
+        if (File.Exists(fullpath))
+        {
+            File.Delete(fullpath);
+        }
+    }
 }

@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: HolderCounterSO
   m_EditorClassIdentifier: 
   ItemPrefab: {fileID: 8696452106368318991, guid: fd02c07403f6d4e4e8f93300da31184e, type: 3}
-  ShopSpriteImage: {fileID: 21300000, guid: bf49b7af465d8c7468481a7c919c46d5, type: 3}
+  ShopSpriteImage: {fileID: 21300000, guid: d038ec4f8bcf25b45840ac674029f1c2, type: 3}
   Price: 500

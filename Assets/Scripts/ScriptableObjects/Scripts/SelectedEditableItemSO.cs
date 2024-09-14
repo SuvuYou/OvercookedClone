@@ -37,7 +37,7 @@ public class SelectedObjectsInRangeSO : ScriptableObject
 
     public void TriggerSelectEditingSubject(EditableItem subject)
     {
-        if (subject != SelectedEditingSubject && !IsCurrentlyEditing) OnSelectSubject?.Invoke(subject);
+        if (subject != SelectedEditingSubject && (!IsCurrentlyEditing || SelectedEditingSubject == null)) OnSelectSubject?.Invoke(subject);
     }
 
     public void TriggerSelectGridTile(GridTile tile)
